@@ -40,9 +40,7 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 ### Claude Code
 
 ```bash
-git clone https://github.com/danielbrodie/skill-tree.git
-cd skill-tree
-claude plugin marketplace add .
+claude plugin marketplace add danielbrodie/skill-tree
 claude plugin install skill-tree@skill-tree
 ```
 
