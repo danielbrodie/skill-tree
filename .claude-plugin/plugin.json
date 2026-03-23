@@ -1,6 +1,6 @@
 {
   "name": "skill-tree",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Two-tier routing architecture for agent skills at scale. Clusters skills into routers, validates graph integrity, and keeps catalog budgets under control.",
   "homepage": "https://github.com/danielbrodie/skill-tree"
 }
