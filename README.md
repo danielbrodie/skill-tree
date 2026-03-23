@@ -107,6 +107,18 @@ Works on Claude Code, Gemini CLI, OpenClaw, and Codex CLI. All scripts accept `-
 | OpenClaw | `~/.openclaw/skills/` | `~/.openclaw/skills/` (same dir) | `disable-model-invocation` only |
 | Codex CLI | `~/.codex/skills/` | `~/.claude/skills-library/` | `agents/openai.yaml` (via `--codex`) |
 
+## Upgrading
+
+Upgrading the plugin never touches your manifest — your cluster assignments, custom instructions, and manual edits are preserved.
+
+| Platform | How to upgrade |
+|----------|---------------|
+| Claude Code | `claude plugin update skill-tree@skill-tree` |
+| Gemini CLI | `gemini extensions update skill-tree` |
+| OpenClaw (local) | `git pull` in the repo, then restart the gateway |
+| OpenClaw (npm) | `openclaw plugins update skill-tree` |
+| Codex CLI / scripts | `git pull` (scripts run via `uv run`, no reinstall needed) |
+
 ## License
 
 Apache 2.0
