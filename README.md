@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/header-final.png" alt="skill-tree" width="100%">
+</p>
+
 # skill-tree
 
 Two-tier routing architecture for agent skills at scale. When your flat skills directory hits 100+ skills, catalog budgets overflow and the model picks poorly. skill-tree clusters skills into routers, validates graph integrity, and keeps token budgets under control.
