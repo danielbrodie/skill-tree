@@ -284,7 +284,7 @@ def main() -> None:
             print(f"Found {Colors.BOLD}{len(new_skills)} new skill(s){Colors.RESET} not in manifest:")
             for name in new_skills:
                 print(f"  {Colors.CYAN}+{Colors.RESET} {name}")
-            print(f"\nAdded as standalones. Run /setup to re-cluster if needed.")
+            print(f"\nProposed as standalones (preview written). Run /setup to apply and re-cluster.")
             print(f"Use --full to regenerate the entire cluster structure.\n")
 
             # Write preview with merged manifest
