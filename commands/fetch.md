@@ -1,7 +1,5 @@
 ---
-name: fetch
 description: Fetch a skill from GitHub and wire it into the skill graph
-user-invocable: true
 ---
 
 Fetch and install a skill from GitHub. Run:

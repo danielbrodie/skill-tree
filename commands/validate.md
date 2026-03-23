@@ -1,7 +1,5 @@
 ---
-name: validate
 description: Validate skill graph integrity against manifest and filesystem
-user-invocable: true
 ---
 
 Validate the skill graph. Run:

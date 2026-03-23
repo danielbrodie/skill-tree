@@ -1,7 +1,5 @@
 ---
-name: bootstrap
 description: Bootstrap skill-tree manifest and directory structure
-user-invocable: true
 ---
 
 Bootstrap the skill-tree manifest. Run:

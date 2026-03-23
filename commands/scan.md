@@ -1,7 +1,5 @@
 ---
-name: scan
 description: Analyze installed skills and propose a cluster structure
-user-invocable: true
 ---
 
 Scan all installed skills and propose a two-tier cluster structure. Run:

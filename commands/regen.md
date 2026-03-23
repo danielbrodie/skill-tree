@@ -1,7 +1,5 @@
 ---
-name: regen
 description: Regenerate cluster routing files from manifest
-user-invocable: true
 ---
 
 Regenerate all cluster SKILL.md files from the manifest. First preview with dry-run:
