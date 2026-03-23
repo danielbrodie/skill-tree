@@ -115,8 +115,7 @@ Upgrading the plugin never touches your manifest — your cluster assignments, c
 |----------|---------------|
 | Claude Code | `claude plugin update skill-tree@skill-tree` |
 | Gemini CLI | `gemini extensions update skill-tree` |
-| OpenClaw (local) | `git pull` in the repo, then restart the gateway |
-| OpenClaw (npm) | `openclaw plugins update skill-tree` |
+| OpenClaw | `git pull` in the cloned repo, then restart the gateway |
 | Codex CLI / scripts | `git pull` (scripts run via `uv run`, no reinstall needed) |
 
 ## License
