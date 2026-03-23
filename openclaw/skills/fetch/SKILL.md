@@ -4,10 +4,10 @@ description: Fetch a skill from GitHub and wire it into the skill graph
 metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 ---
 
-Fetch and install a skill from GitHub. Run:
+Fetch and install a skill from GitHub. Extract the URL from the user's message, then run:
 
 ```bash
-uv run {baseDir}/../scripts/add.py "$ARGUMENTS" --library-dir ~/.openclaw/skills
+uv run {baseDir}/../scripts/add.py "<url>" --library-dir ~/.openclaw/skills
 ```
 
 **Security flow:**
