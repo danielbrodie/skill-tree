@@ -8,4 +8,4 @@ Validate the skill graph. Run:
 uv run scripts/check.py
 ```
 
-Present the results. If errors are found, suggest running `/skill-tree:regen` to fix disable-model-invocation issues, or manual manifest edits for structural problems.
+Present the results. If errors are found, suggest running `/regen` to fix disable-model-invocation issues, or manual manifest edits for structural problems.

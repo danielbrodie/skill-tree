@@ -12,7 +12,7 @@ uv run ${extensionPath}/scripts/add.py "{{args}}" --skills-dir ~/.gemini/skills
 3. It finds the best cluster match via TF-IDF similarity
 4. It asks for confirmation before writing anything
 
-New skills are sandboxed by default (`disable-model-invocation: true`). After adding, suggest running `/skill-tree regen` to update cluster routing tables.
+New skills are sandboxed by default (`disable-model-invocation: true`). After adding, suggest running `/regen` to update cluster routing tables.
 
 URL formats supported:
 - `https://github.com/<org>/<repo>/tree/main/skills/<skill-name>`

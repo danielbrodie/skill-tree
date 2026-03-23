@@ -14,11 +14,11 @@ uv run scripts/add.py "<url>"
 3. It finds the best cluster match via TF-IDF similarity
 4. It asks for confirmation before writing anything
 
-**Important:** New skills are sandboxed by default (`disable-model-invocation: true`). The user must explicitly enable them by editing the manifest and running `/skill-tree:regen`.
+**Important:** New skills are sandboxed by default (`disable-model-invocation: true`). The user must explicitly enable them by editing the manifest and running `/regen`.
 
 URL formats supported:
 - `https://github.com/<org>/<repo>/tree/main/skills/<skill-name>`
 - `https://github.com/<org>/<repo>/blob/main/skills/<skill-name>/SKILL.md`
 - `<org>/<repo>/<skill-name>` (shorthand)
 
-After adding, suggest running `/skill-tree:regen` to update cluster routing tables.
+After adding, suggest running `/regen` to update cluster routing tables.

@@ -8,4 +8,4 @@ Bootstrap the skill-tree manifest. Run:
 uv run scripts/init.py
 ```
 
-Present the output to the user. If skills were detected, suggest running `/skill-tree:scan` next.
+Present the output to the user. If skills were detected, suggest running `/scan` next.

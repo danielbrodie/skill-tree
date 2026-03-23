@@ -6,5 +6,5 @@ Bootstrap the skill-tree manifest. Run:
 uv run ${extensionPath}/scripts/init.py --skills-dir ~/.gemini/skills
 ```
 
-Present the output to the user. If skills were detected, suggest running `/skill-tree scan` next.
+Present the output to the user. If skills were detected, suggest running `/scan` next.
 """
