@@ -28,6 +28,12 @@ claude plugin install skill-tree@skill-tree
 gemini extensions install https://github.com/danielbrodie/skill-tree
 ```
 
+**OpenClaw:**
+```bash
+openclaw plugins install ./openclaw
+```
+Or from a clone: `git clone` the repo, then `openclaw plugins install ./skill-tree/openclaw`.
+
 **Codex CLI** — no plugin system, use scripts directly:
 ```bash
 git clone https://github.com/danielbrodie/skill-tree.git

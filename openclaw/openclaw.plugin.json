@@ -1,0 +1,11 @@
+{
+  "id": "skill-tree",
+  "name": "skill-tree",
+  "description": "Two-tier routing architecture for agent skills at scale. Clusters skills into routers, validates graph integrity, and keeps token budgets under control.",
+  "skills": ["./skills"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
