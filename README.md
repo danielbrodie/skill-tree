@@ -92,7 +92,7 @@ skill-tree keeps skills in two directories:
 
 ## Cross-platform
 
-Works on Claude Code, Gemini CLI, and Codex CLI. The two-directory split is portable — all scripts accept `--skills-dir` and `--library-dir` to target any platform's paths. The `--codex` flag on sync generates `agents/openai.yaml` files for Codex compatibility.
+Works on Claude Code, Gemini CLI, OpenClaw, and Codex CLI. All scripts accept `--skills-dir` and `--library-dir` to target any platform's paths. OpenClaw uses a single directory (`~/.openclaw/skills/`) for both routers and leaves, hiding leaves via `disable-model-invocation` only. The `--codex` flag on sync generates `agents/openai.yaml` files for Codex compatibility.
 
 ## License
 
