@@ -12,12 +12,9 @@ Two-tier routing architecture for agent skills at scale. Clusters skills into ro
 
 | Command | Purpose |
 |---------|---------|
-| `/skill-tree bootstrap` | Bootstrap manifest from existing skills |
-| `/skill-tree validate` | Validate graph integrity (9 checks) |
-| `/skill-tree regen` | Regenerate cluster files from manifest |
-| `/skill-tree graph` | Show graph state with token estimate |
-| `/skill-tree scan` | Propose cluster structure from flat skills |
-| `/skill-tree fetch` | Fetch a skill from GitHub and wire it in |
+| `/check` | Health check — validation, clusters, token savings |
+| `/setup` | Bootstrap, cluster, and generate routing files |
+| `/fetch` | Fetch a skill from GitHub and wire it in |
 
 ## Note on cross-platform paths
 

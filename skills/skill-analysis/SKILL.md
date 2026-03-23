@@ -13,15 +13,12 @@ You are helping manage a two-tier skill routing architecture via the skill-tree 
 - **Library** (`~/.claude/skills-library/`): Contains leaf skills (~180+). These are loaded on demand when a cluster routes to them.
 - **Manifest** (`~/.claude/skills-library/skill-tree/manifest.json`): Single source of truth for the graph structure.
 
-## Available commands
+## Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/bootstrap` | Bootstrap manifest from existing skills |
-| `/validate` | Validate graph integrity (9 checks) |
-| `/regen` | Regenerate cluster files from manifest |
-| `/graph` | Show graph state with token estimate |
-| `/scan` | Propose cluster structure from flat skills |
+| `/check` | Health check — validation, clusters, token savings |
+| `/setup` | Bootstrap, cluster, and generate routing files |
 | `/fetch` | Fetch a skill from GitHub and wire it in |
 
 ## Key concepts
@@ -34,7 +31,7 @@ You are helping manage a two-tier skill routing architecture via the skill-tree 
 
 ## When to suggest actions
 
-- User asks "how many skills do I have" → run `/graph`
-- User says "check my skills" → run `/validate`
-- User says "something broke" about skills → run `/validate`
-- User edited the manifest → suggest `/regen`
+- User asks "how many skills do I have" → run `/check`
+- User says "check my skills" → run `/check`
+- User says "something broke" about skills → run `/check`
+- User edited the manifest → suggest `/setup`

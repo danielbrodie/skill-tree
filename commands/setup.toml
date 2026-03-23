@@ -1,0 +1,29 @@
+description = "Set up or rebuild the skill graph — bootstrap, cluster, and generate routing files"
+prompt = """
+Run the full setup pipeline, presenting results between steps:
+
+Step 1 — Bootstrap:
+```bash
+uv run ${extensionPath}/scripts/init.py --skills-dir ~/.gemini/skills
+```
+
+Step 2 — Cluster:
+```bash
+uv run ${extensionPath}/scripts/scan.py --skills-dir ~/.gemini/skills
+```
+Present the proposed clusters. If the user approves, continue.
+
+Step 3 — Sync (preview first):
+```bash
+uv run ${extensionPath}/scripts/sync.py --dry-run --skills-dir ~/.gemini/skills
+```
+If confirmed:
+```bash
+uv run ${extensionPath}/scripts/sync.py --skills-dir ~/.gemini/skills
+```
+
+Step 4 — Verify:
+```bash
+uv run ${extensionPath}/scripts/status.py --skills-dir ~/.gemini/skills
+```
+"""

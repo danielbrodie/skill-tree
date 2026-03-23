@@ -44,7 +44,7 @@ claude plugin marketplace add danielbrodie/skill-tree
 claude plugin install skill-tree@skill-tree
 ```
 
-Commands: `/bootstrap`, `/validate`, `/regen`, `/graph`, `/scan`, `/fetch`.
+Then run `/setup` to get started.
 
 ### Gemini CLI
 
@@ -52,7 +52,7 @@ Commands: `/bootstrap`, `/validate`, `/regen`, `/graph`, `/scan`, `/fetch`.
 gemini extensions install https://github.com/danielbrodie/skill-tree
 ```
 
-Commands: `/bootstrap`, `/validate`, `/regen`, `/graph`, `/scan`, `/fetch`. Pass `--skills-dir ~/.gemini/skills` to target Gemini's scan path.
+Then run `/setup` to get started.
 
 ### Codex CLI
 
@@ -76,84 +76,61 @@ The `--codex` flag generates `agents/openai.yaml` in each leaf skill with `allow
 
 ## Commands
 
-| Command | Purpose | Mutates files? |
-|---------|---------|----------------|
-| `/bootstrap` | Bootstrap manifest from existing skills | Yes |
-| `/scan` | Analyze skills, propose cluster structure | Preview only |
-| `/validate` | Validate graph integrity (9 checks) | No |
-| `/regen` | Regenerate cluster files from manifest | Yes |
-| `/graph` | Show graph state with token estimate | No |
-| `/fetch <url>` | Fetch skill from GitHub, wire into graph | Yes |
+| Command | Purpose |
+|---------|---------|
+| `/check` | Health check — validation, cluster overview, token savings |
+| `/setup` | Bootstrap, cluster, and generate routing files |
+| `/fetch <url>` | Fetch a skill from GitHub and wire it in |
 
 ## Quick Start
 
 ```bash
-# Bootstrap from your existing skills
-/bootstrap
+# First time: detect skills, cluster, generate routing files
+/setup
 
-# Propose a cluster structure
-/scan
+# Anytime: see health, token savings, and cluster overview
+/check
 
-# Review the preview, then apply and regen
-/regen
-
-# Check everything is valid
-/validate
+# Add a new skill from GitHub
+/fetch https://github.com/org/repo/tree/main/skills/skill-name
 ```
 
 ## How It Works
 
-### bootstrap
+### `/check`
 
-Detects existing skills in `~/.claude/skills/` and `~/.claude/skills-library/`, creates `manifest.json` with all current skills as standalones.
+Shows everything in one view: validation results (9 checks), cluster overview, and token savings comparison.
 
-### scan
+```
+skill-tree — 163 skills managed
 
-Reads all SKILL.md files, clusters them using TF-IDF + agglomerative clustering (scikit-learn), and writes a proposed manifest to a preview directory. You review and edit before applying.
+  Flat catalog:    ~16,300 tokens
+  With skill-tree: ~1,876 tokens (88% reduction)
 
-Configurable via `--threshold` (0-1, controls clustering tightness).
+Clusters (22):
+  research-index       5 leaves   Research — web search, deep research...
+  dev-tools            8 leaves   Developer tools — GitHub, coding agents...
+  ...
 
-### validate
+No errors. 16 warnings.
+```
 
-Runs 9 validation checks against the manifest and filesystem:
+A **SessionStart hook** runs this automatically and prints a one-liner if issues are found.
 
-| Check | Severity | Description |
-|-------|----------|-------------|
-| dead-reference | ERROR | Leaf in manifest but no SKILL.md on disk |
-| uniqueness-violation | ERROR | Skill appears in multiple manifest arrays |
-| leaf-not-disabled | ERROR | Clustered leaf without `disable-model-invocation: true` |
-| always-on-leaf | ERROR | Leaf with `always: true` (bypasses architecture) |
-| orphaned-disabled | WARNING | Has `disable-model-invocation` but not in manifest |
-| unclustered-over-budget | WARNING | Too many visible skills in scan path |
-| cluster-too-large | WARNING | Cluster exceeds 15 leaves |
-| crossref-missing | WARNING | Cross-referenced skill doesn't exist |
-| no-description | WARNING | Leaf with no routingHint |
+### `/setup`
 
-Exit codes: 0 = clean, 1 = warnings, 2 = errors.
+Runs the full pipeline with confirmation between steps:
 
-A **SessionStart hook** runs `check --quiet --notify` automatically and prints a one-line alert if issues are found.
+1. **Bootstrap** — detect existing skills, create manifest
+2. **Cluster** — propose structure via TF-IDF + agglomerative clustering (scikit-learn). Configurable `--threshold` (0-1)
+3. **Sync** — preview changes, then generate cluster routing files and set disable flags
+4. **Verify** — run `/check` to confirm
 
-### regen
+### `/fetch`
 
-Regenerates all cluster SKILL.md files from the manifest using a canonical template with routing tables. Also sets `disable-model-invocation: true` on all leaves, reference nodes, and deprecated skills.
+Fetches a skill from GitHub, displays the **full content** for review, runs security checks, matches to the best cluster, and sandboxes by default (`disable-model-invocation: true`).
 
-Flags:
-- `--dry-run` — preview changes without writing
-- `--codex` — also generate `agents/openai.yaml` for Codex CLI compatibility
-
-### fetch
-
-Fetches a skill from GitHub, displays the **full content** for review, runs security checks, matches to the best cluster via TF-IDF similarity, and writes to the library with `disable-model-invocation: true` (sandbox by default).
-
-Security model:
-- Full content display before confirmation
-- No `--yes` flag (intentional friction for untrusted content)
-- Content policy warnings: prompt injection, zero-width unicode, path traversal, oversized files
-- Source pinning with Git commit SHA
-
-### graph
-
-Shows the current graph state: clusters with leaf counts, standalones, hot path, reference nodes, deprecated skills, and estimated session token usage.
+Security: full content display, no `--yes` flag, content policy warnings (prompt injection, zero-width unicode, path traversal), source pinning with Git SHA.
 
 ## Manifest Schema
 
@@ -186,29 +163,26 @@ Shows the current graph state: clusters with leaf counts, standalones, hot path,
 
 ```
 skill-tree/
-  .claude-plugin/plugin.json     Claude Code plugin manifest
+  .claude-plugin/                Claude Code plugin + marketplace manifests
   gemini-extension.json          Gemini CLI extension manifest
   GEMINI.md                      Gemini CLI context file
-  commands/
-    *.md                         Claude Code slash commands
-    *.toml                       Gemini CLI slash commands
+  skills/
+    check/SKILL.md               /check command
+    setup/SKILL.md               /setup command
+    fetch/SKILL.md               /fetch command
+    skill-analysis/SKILL.md      Auto-invoked for skill organization questions
+  commands/*.toml                Gemini CLI slash commands
   hooks/hooks.json               SessionStart hook
-  skills/skill-analysis/         Auto-invoked skill for organization questions
   scripts/
+    status.py                    Combined health check + graph overview
     init.py                      Bootstrap manifest
     check.py                     9 validation checks
     sync.py                      Regenerate cluster files + Codex YAML
     scan.py                      TF-IDF clustering
     add.py                       GitHub fetch + auto-route
     list.py                      Graph summary
-    lib/
-      manifest.py                Manifest read/write/validate
-      skillfile.py               SKILL.md frontmatter parse/write
-      generator.py               Cluster SKILL.md template generation
-      cluster.py                 TF-IDF + hierarchical clustering
-      security.py                Content policy checks
-      codex.py                   Codex agents/openai.yaml generation
-  tests/                         135 unit tests
+    lib/                         Shared libraries
+  tests/                         135+ unit tests
 ```
 
 Scripts use `uv run` with PEP 723 inline dependencies — no separate install step.
@@ -282,8 +256,8 @@ If you were using the earlier `skill-graph` sync tool (`~/.claude/skills-library
 
 1. Copy your manifest: `cp ~/.claude/skills-library/skill-graph/manifest.json ~/.claude/skills-library/skill-tree/manifest.json`
 2. Install skill-tree as a plugin (see Install above)
-3. Run `/validate` to validate
-4. Run `/regen` to regenerate cluster files
+3. Run `/check` to validate
+4. Run `/setup` to regenerate cluster files
 
 The old `skill-graph/sync.py` is superseded and can be retired.
 

@@ -1,0 +1,10 @@
+description = "Check skill graph health — validation, clusters, and token savings"
+prompt = """
+Run the status check:
+
+```bash
+uv run ${extensionPath}/scripts/status.py --skills-dir ~/.gemini/skills
+```
+
+Present the output. Highlight token savings, any errors, and cluster overview.
+"""

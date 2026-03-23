@@ -33,7 +33,7 @@ class TestGeminiExtensionJson:
 class TestGeminiCommands:
     """Verify TOML command files exist alongside Claude Code .md commands."""
 
-    EXPECTED_COMMANDS = ["bootstrap", "validate", "regen", "graph", "scan", "fetch"]
+    EXPECTED_COMMANDS = ["check", "setup", "fetch"]
 
     def test_toml_files_exist(self):
         commands_dir = REPO_ROOT / "commands"
@@ -54,12 +54,12 @@ class TestGeminiCommands:
             content = (commands_dir / f"{cmd}.toml").read_text()
             assert "description" in content, f"{cmd}.toml missing description"
 
-    def test_claude_md_files_still_exist(self):
-        """Gemini TOML files must not replace Claude Code .md files."""
-        commands_dir = REPO_ROOT / "commands"
+    def test_claude_skills_exist(self):
+        """Each command should have a corresponding Claude Code skill."""
+        skills_dir = REPO_ROOT / "skills"
         for cmd in self.EXPECTED_COMMANDS:
-            md_path = commands_dir / f"{cmd}.md"
-            assert md_path.exists(), f"Missing {cmd}.md (Claude Code command)"
+            skill_path = skills_dir / cmd / "SKILL.md"
+            assert skill_path.exists(), f"Missing skills/{cmd}/SKILL.md"
 
 
 class TestGeminiContextFile:
@@ -69,6 +69,6 @@ class TestGeminiContextFile:
 
     def test_mentions_available_commands(self):
         content = (REPO_ROOT / "GEMINI.md").read_text()
-        assert "/skill-tree bootstrap" in content
-        assert "/skill-tree validate" in content
-        assert "/skill-tree regen" in content
+        assert "/check" in content
+        assert "/setup" in content
+        assert "/fetch" in content
