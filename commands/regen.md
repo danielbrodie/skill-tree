@@ -1,5 +1,5 @@
 ---
-name: sync
+name: regen
 description: Regenerate cluster routing files from manifest
 user-invocable: true
 ---

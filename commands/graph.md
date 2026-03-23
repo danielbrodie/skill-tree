@@ -1,5 +1,5 @@
 ---
-name: list
+name: graph
 description: Show current skill graph state with token estimates
 user-invocable: true
 ---

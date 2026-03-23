@@ -17,10 +17,12 @@ You are helping manage a two-tier skill routing architecture via the skill-tree 
 
 | Command | Purpose |
 |---------|---------|
-| `/skill-tree:init` | Bootstrap manifest from existing skills |
-| `/skill-tree:check` | Validate graph integrity (9 checks) |
-| `/skill-tree:sync` | Regenerate cluster files from manifest |
-| `/skill-tree:list` | Show graph state with token estimate |
+| `/skill-tree:bootstrap` | Bootstrap manifest from existing skills |
+| `/skill-tree:validate` | Validate graph integrity (9 checks) |
+| `/skill-tree:regen` | Regenerate cluster files from manifest |
+| `/skill-tree:graph` | Show graph state with token estimate |
+| `/skill-tree:scan` | Propose cluster structure from flat skills |
+| `/skill-tree:fetch` | Fetch a skill from GitHub and wire it in |
 
 ## Key concepts
 
@@ -32,7 +34,7 @@ You are helping manage a two-tier skill routing architecture via the skill-tree 
 
 ## When to suggest actions
 
-- User asks "how many skills do I have" → run `/skill-tree:list`
-- User says "check my skills" → run `/skill-tree:check`
-- User says "something broke" about skills → run `/skill-tree:check`
-- User edited the manifest → suggest `/skill-tree:sync`
+- User asks "how many skills do I have" → run `/skill-tree:graph`
+- User says "check my skills" → run `/skill-tree:validate`
+- User says "something broke" about skills → run `/skill-tree:validate`
+- User edited the manifest → suggest `/skill-tree:regen`

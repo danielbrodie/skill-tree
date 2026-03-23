@@ -33,7 +33,7 @@ class TestGeminiExtensionJson:
 class TestGeminiCommands:
     """Verify TOML command files exist alongside Claude Code .md commands."""
 
-    EXPECTED_COMMANDS = ["init", "check", "sync", "list", "scan", "add"]
+    EXPECTED_COMMANDS = ["bootstrap", "validate", "regen", "graph", "scan", "fetch"]
 
     def test_toml_files_exist(self):
         commands_dir = REPO_ROOT / "commands"
@@ -69,6 +69,6 @@ class TestGeminiContextFile:
 
     def test_mentions_available_commands(self):
         content = (REPO_ROOT / "GEMINI.md").read_text()
-        assert "/skill-tree init" in content
-        assert "/skill-tree check" in content
-        assert "/skill-tree sync" in content
+        assert "/skill-tree bootstrap" in content
+        assert "/skill-tree validate" in content
+        assert "/skill-tree regen" in content

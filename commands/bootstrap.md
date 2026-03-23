@@ -1,5 +1,5 @@
 ---
-name: init
+name: bootstrap
 description: Bootstrap skill-tree manifest and directory structure
 user-invocable: true
 ---

@@ -19,6 +19,6 @@ The preview is written to `~/.claude/skills-library/skill-tree/preview/`. The us
 1. Review and edit `preview/manifest.json` before applying
 2. Apply directly if the structure looks good
 
-To apply, read the preview manifest and use it to update the real manifest, then run `/skill-tree:sync`.
+To apply, read the preview manifest and use it to update the real manifest, then run `/skill-tree:regen`.
 
 The `--threshold` flag controls clustering tightness (0-1). Lower values produce tighter, smaller clusters. Default is 0.7.

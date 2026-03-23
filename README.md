@@ -45,7 +45,7 @@ cd skill-tree
 claude plugin install .
 ```
 
-Commands become `/skill-tree:init`, `/skill-tree:check`, etc.
+Commands become `/skill-tree:bootstrap`, `/skill-tree:validate`, etc.
 
 ### Gemini CLI
 
@@ -54,7 +54,7 @@ git clone https://github.com/danielbrodie/skill-tree.git
 gemini extensions install ./skill-tree
 ```
 
-Commands become `/skill-tree init`, `/skill-tree check`, etc. Pass `--skills-dir ~/.gemini/skills` to target Gemini's scan path.
+Commands become `/skill-tree bootstrap`, `/skill-tree validate`, etc. Pass `--skills-dir ~/.gemini/skills` to target Gemini's scan path.
 
 ### Codex CLI
 
@@ -80,27 +80,27 @@ The `--codex` flag generates `agents/openai.yaml` in each leaf skill with `allow
 
 | Command | Purpose | Mutates files? |
 |---------|---------|----------------|
-| `/skill-tree:init` | Bootstrap manifest from existing skills | Yes |
+| `/skill-tree:bootstrap` | Bootstrap manifest from existing skills | Yes |
 | `/skill-tree:scan` | Analyze skills, propose cluster structure | Preview only |
-| `/skill-tree:check` | Validate graph integrity (9 checks) | No |
-| `/skill-tree:sync` | Regenerate cluster files from manifest | Yes |
-| `/skill-tree:list` | Show graph state with token estimate | No |
-| `/skill-tree:add <url>` | Fetch skill from GitHub, wire into graph | Yes |
+| `/skill-tree:validate` | Validate graph integrity (9 checks) | No |
+| `/skill-tree:regen` | Regenerate cluster files from manifest | Yes |
+| `/skill-tree:graph` | Show graph state with token estimate | No |
+| `/skill-tree:fetch <url>` | Fetch skill from GitHub, wire into graph | Yes |
 
 ## Quick Start
 
 ```bash
 # Bootstrap from your existing skills
-/skill-tree:init
+/skill-tree:bootstrap
 
 # Propose a cluster structure
 /skill-tree:scan
 
-# Review the preview, then apply and sync
-/skill-tree:sync
+# Review the preview, then apply and regen
+/skill-tree:regen
 
 # Check everything is valid
-/skill-tree:check
+/skill-tree:validate
 ```
 
 ## How It Works
@@ -284,8 +284,8 @@ If you were using the earlier `skill-graph` sync tool (`~/.claude/skills-library
 
 1. Copy your manifest: `cp ~/.claude/skills-library/skill-graph/manifest.json ~/.claude/skills-library/skill-tree/manifest.json`
 2. Install skill-tree as a plugin (see Install above)
-3. Run `/skill-tree:check` to validate
-4. Run `/skill-tree:sync` to regenerate cluster files
+3. Run `/skill-tree:validate` to validate
+4. Run `/skill-tree:regen` to regenerate cluster files
 
 The old `skill-graph/sync.py` is superseded and can be retired.
 
