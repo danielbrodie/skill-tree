@@ -7,7 +7,7 @@ metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 Fetch and install a skill from GitHub. Run:
 
 ```bash
-uv run {baseDir}/../../scripts/add.py "$ARGUMENTS" --library-dir ~/.openclaw/skills
+uv run {baseDir}/../scripts/add.py "$ARGUMENTS" --library-dir ~/.openclaw/skills
 ```
 
 **Security flow:**

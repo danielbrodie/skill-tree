@@ -82,6 +82,14 @@ class TestOpenClawSkills:
             content = (OPENCLAW_ROOT / "skills" / skill / "SKILL.md").read_text()
             assert "{baseDir}" in content, f"{skill} missing {{baseDir}} interpolation"
 
+    def test_scripts_ship_with_plugin(self):
+        """Scripts must be inside the openclaw/ package (not referenced externally)."""
+        scripts_dir = OPENCLAW_ROOT / "scripts"
+        assert scripts_dir.is_dir(), "scripts/ directory missing from openclaw package"
+        for script in ["status.py", "init.py", "scan.py", "sync.py", "add.py"]:
+            assert (scripts_dir / script).exists(), f"Missing {script} in openclaw/scripts/"
+        assert (scripts_dir / "lib").is_dir(), "scripts/lib/ missing from openclaw package"
+
     def test_skills_have_uv_requirement(self):
         """Command skills should gate on uv being available."""
         for skill in ["check", "setup", "fetch"]:

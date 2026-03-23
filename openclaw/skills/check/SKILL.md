@@ -7,7 +7,7 @@ metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 Run the status check:
 
 ```bash
-uv run {baseDir}/../../scripts/status.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills
+uv run {baseDir}/../scripts/status.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills
 ```
 
 Present the output. Highlight:
