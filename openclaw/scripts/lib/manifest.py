@@ -220,19 +220,26 @@ def total_skill_count(manifest: Manifest) -> int:
 
 
 def estimate_catalog_tokens(manifest: Manifest) -> int:
-    """Estimate tokens consumed by cluster descriptions in the scan path.
+    """Estimate tokens consumed by visible skill descriptions in the scan path.
+
+    Only cluster routers and standalones/hot-path appear in the catalog.
+    Each visible skill costs: ~97 chars overhead + name + description.
+    Standalones use an estimated 80 chars for description since we don't
+    have the actual SKILL.md content here — their full description loads
+    into the catalog, not just the name.
 
     Rough heuristic: 1 token ≈ 4 characters.
     """
     total_chars = 0
     for cluster in manifest.clusters.values():
-        # name + description per cluster
-        total_chars += len(cluster.name) + len(cluster.description) + 20  # overhead
-    # Standalones also appear in catalog
+        # Clusters show name + description in catalog
+        total_chars += len(cluster.name) + len(cluster.description) + 97
+    # Standalones show name + their full description in catalog
+    # We don't have the actual description here, so estimate conservatively
     for name in manifest.standalones:
-        total_chars += len(name) + 80  # name + estimated description
+        total_chars += len(name) + 150  # name + ~150 chars for typical description
     for name in manifest.hot_path:
-        total_chars += len(name) + 80
+        total_chars += len(name) + 150
     return total_chars // 4
 
 

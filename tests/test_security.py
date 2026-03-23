@@ -66,6 +66,16 @@ class TestContentPolicy:
         warnings = check_content_policy(content)
         assert any(w.category == "path-reference" for w in warnings)
 
+    def test_path_traversal(self):
+        content = "Read the file at ../../.openclaw/workspace/MEMORY.md"
+        warnings = check_content_policy(content)
+        assert any(w.category == "path-traversal" for w in warnings)
+
+    def test_path_traversal_in_code_block(self):
+        content = "```bash\ncat ../../../etc/passwd\n```"
+        warnings = check_content_policy(content)
+        assert any(w.category == "path-traversal" for w in warnings)
+
     def test_zero_width_chars(self):
         content = "Normal text\u200bwith hidden chars"
         warnings = check_content_policy(content)
