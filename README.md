@@ -42,7 +42,8 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 ```bash
 git clone https://github.com/danielbrodie/skill-tree.git
 cd skill-tree
-claude plugin install .
+claude plugin marketplace add .
+claude plugin install skill-tree@skill-tree
 ```
 
 Commands become `/skill-tree:bootstrap`, `/skill-tree:validate`, etc.
@@ -105,7 +106,7 @@ The `--codex` flag generates `agents/openai.yaml` in each leaf skill with `allow
 
 ## How It Works
 
-### init
+### bootstrap
 
 Detects existing skills in `~/.claude/skills/` and `~/.claude/skills-library/`, creates `manifest.json` with all current skills as standalones.
 
@@ -115,7 +116,7 @@ Reads all SKILL.md files, clusters them using TF-IDF + agglomerative clustering 
 
 Configurable via `--threshold` (0-1, controls clustering tightness).
 
-### check
+### validate
 
 Runs 9 validation checks against the manifest and filesystem:
 
@@ -135,7 +136,7 @@ Exit codes: 0 = clean, 1 = warnings, 2 = errors.
 
 A **SessionStart hook** runs `check --quiet --notify` automatically and prints a one-line alert if issues are found.
 
-### sync
+### regen
 
 Regenerates all cluster SKILL.md files from the manifest using a canonical template with routing tables. Also sets `disable-model-invocation: true` on all leaves, reference nodes, and deprecated skills.
 
@@ -143,7 +144,7 @@ Flags:
 - `--dry-run` — preview changes without writing
 - `--codex` — also generate `agents/openai.yaml` for Codex CLI compatibility
 
-### add
+### fetch
 
 Fetches a skill from GitHub, displays the **full content** for review, runs security checks, matches to the best cluster via TF-IDF similarity, and writes to the library with `disable-model-invocation: true` (sandbox by default).
 
@@ -153,7 +154,7 @@ Security model:
 - Content policy warnings: prompt injection, zero-width unicode, path traversal, oversized files
 - Source pinning with Git commit SHA
 
-### list
+### graph
 
 Shows the current graph state: clusters with leaf counts, standalones, hot path, reference nodes, deprecated skills, and estimated session token usage.
 
