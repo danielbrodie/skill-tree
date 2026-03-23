@@ -313,21 +313,30 @@ def _generate_label(members: list[SkillDocument], distinctive_terms: list[str]) 
 def _generate_description(
     members: list[SkillDocument], distinctive_terms: list[str]
 ) -> str:
-    """Generate a cluster description from member descriptions and distinctive terms."""
-    # Collect key phrases from member descriptions
+    """Generate a cluster description from distinctive terms and member names.
+
+    Uses distinctive terms (highest TF-IDF weight within cluster, lowest
+    across others) as the primary signal — these are what make this cluster
+    different from other clusters. Member description fragments are secondary.
+    """
+    # Lead with distinctive terms — these are the routing signal
+    if distinctive_terms:
+        terms_str = ", ".join(distinctive_terms[:5])
+        # Add a few member names for specificity
+        member_names = [m.name for m in members[:4]]
+        if member_names:
+            return f"{terms_str} — skills: {', '.join(member_names)}"
+        return terms_str
+
+    # Fallback: use first-sentence fragments from descriptions
     desc_fragments: list[str] = []
-    for m in members[:5]:  # sample first 5
+    for m in members[:3]:
         if m.description:
-            # Take first sentence or phrase
             first_part = m.description.split(".")[0].split("—")[0].strip()
-            if first_part and len(first_part) < 100:
+            if first_part and len(first_part) < 80:
                 desc_fragments.append(first_part)
 
     if desc_fragments:
-        summary = ", ".join(desc_fragments[:3])
-    elif distinctive_terms:
-        summary = ", ".join(distinctive_terms[:3])
-    else:
-        summary = "grouped skills"
+        return ", ".join(desc_fragments)
 
-    return summary
+    return "grouped skills"

@@ -75,6 +75,15 @@ def check_content_policy(content: str, name: str = "") -> list[ContentWarning]:
                 i,
             ))
 
+        # Path traversal
+        if re.search(r"\.\./", line):
+            warnings.append(ContentWarning(
+                WarningSeverity.WARNING,
+                "path-traversal",
+                f"Line {i}: contains '../' path traversal",
+                i,
+            ))
+
         # Path references outside skills directories
         if re.search(r"(?:/etc/|/var/|/tmp/|/usr/|/root/|C:\\)", line):
             warnings.append(ContentWarning(
