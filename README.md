@@ -49,8 +49,7 @@ Commands become `/skill-tree:bootstrap`, `/skill-tree:validate`, etc.
 ### Gemini CLI
 
 ```bash
-git clone https://github.com/danielbrodie/skill-tree.git
-gemini extensions install ./skill-tree
+gemini extensions install https://github.com/danielbrodie/skill-tree
 ```
 
 Commands become `/skill-tree bootstrap`, `/skill-tree validate`, etc. Pass `--skills-dir ~/.gemini/skills` to target Gemini's scan path.
