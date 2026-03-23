@@ -33,6 +33,8 @@ from lib.manifest import (
     Cluster,
     LeafEntry,
     Manifest,
+    all_managed_skills,
+    load_manifest,
     save_manifest,
     serialize_manifest,
 )
@@ -179,6 +181,60 @@ def write_preview(
 
 
 # ---------------------------------------------------------------------------
+# Additive merge (when manifest already exists)
+# ---------------------------------------------------------------------------
+
+
+def merge_into_existing(
+    existing: Manifest | None,
+    skills_dir: Path,
+    library_dir: Path,
+    return_new: bool = False,
+) -> Manifest | tuple[Manifest, list[str]] | None:
+    """Merge newly discovered skills into an existing manifest.
+
+    Preserves all existing clusters, standalones, hotPath, referenceNodes,
+    deprecated, and customInstructions. Only adds new/untracked skills as
+    standalones.
+
+    Returns None if existing is None (caller should fall back to full scan).
+    If return_new=True, returns (manifest, new_skill_names).
+    """
+    if existing is None:
+        return None
+
+    # Find all skills on disk
+    all_on_disk: set[str] = set()
+    for dir_path in {skills_dir, library_dir}:
+        all_on_disk.update(scan_skills_dir(dir_path).keys())
+
+    # Find all skills already tracked in manifest
+    managed = all_managed_skills(existing)
+    tracked: set[str] = set(managed.keys())
+
+    # New = on disk but not tracked (excluding cluster router names)
+    new_skills = sorted(all_on_disk - tracked)
+
+    # Build updated standalones tuple with new skills appended
+    updated_standalones = tuple(list(existing.standalones) + new_skills)
+
+    # Create new manifest preserving everything, only adding standalones
+    merged = Manifest(
+        version=existing.version,
+        unclustered_budget=existing.unclustered_budget,
+        clusters=existing.clusters,
+        standalones=updated_standalones,
+        hot_path=existing.hot_path,
+        reference_nodes=existing.reference_nodes,
+        deprecated=existing.deprecated,
+    )
+
+    if return_new:
+        return merged, new_skills
+    return merged
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -202,11 +258,40 @@ def main() -> None:
         help="clustering distance threshold (0-1, lower = tighter clusters)",
     )
     parser.add_argument("--preview-dir", type=Path, default=None)
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="regenerate entire cluster structure (ignores existing manifest)",
+    )
     args = parser.parse_args()
 
     preview_dir = args.preview_dir or (args.library_dir / "skill-tree" / "preview")
+    manifest_path = args.library_dir / "skill-tree" / "manifest.json"
 
-    # Collect all skills
+    # Check for existing manifest → additive mode
+    if manifest_path.exists() and not args.full:
+        existing = load_manifest(manifest_path)
+        result = merge_into_existing(
+            existing, args.skills_dir, args.library_dir, return_new=True
+        )
+        if result is not None:
+            merged, new_skills = result
+            if not new_skills:
+                print(f"{Colors.GREEN}No new skills found.{Colors.RESET} All skills are tracked in the manifest.")
+                print(f"Use --full to regenerate the entire cluster structure.")
+                sys.exit(0)
+
+            print(f"Found {Colors.BOLD}{len(new_skills)} new skill(s){Colors.RESET} not in manifest:")
+            for name in new_skills:
+                print(f"  {Colors.CYAN}+{Colors.RESET} {name}")
+            print(f"\nAdded as standalones. Run /setup to re-cluster if needed.")
+            print(f"Use --full to regenerate the entire cluster structure.\n")
+
+            # Write preview with merged manifest
+            write_preview(merged, preview_dir, len(new_skills))
+            sys.exit(0)
+
+    # Full scan mode (no manifest or --full flag)
     all_docs = collect_all_skills(args.skills_dir, args.library_dir)
     if not all_docs:
         print("No skills found.", file=sys.stderr)
