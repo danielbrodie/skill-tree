@@ -274,6 +274,17 @@ If the user or task explicitly names a skill, load it directly.
 
 The `customInstructions` field in the manifest lets you inject additional guidance between the header and routing table (e.g., decision trees, priority rules).
 
+## Migrating from skill-graph
+
+If you were using the earlier `skill-graph` sync tool (`~/.claude/skills-library/skill-graph/sync.py`):
+
+1. Copy your manifest: `cp ~/.claude/skills-library/skill-graph/manifest.json ~/.claude/skills-library/skill-tree/manifest.json`
+2. Install skill-tree as a plugin (see Install above)
+3. Run `/skill-tree:check` to validate
+4. Run `/skill-tree:sync` to regenerate cluster files
+
+The old `skill-graph/sync.py` is superseded and can be retired.
+
 ## Academic Grounding
 
 - [AgentSkillOS](https://arxiv.org/abs/2603.02176) — Tree retrieval at 200K scale, DAG orchestration outperforms flat invocation
