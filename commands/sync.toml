@@ -1,0 +1,16 @@
+description = "Regenerate cluster routing files from manifest"
+prompt = """
+Regenerate all cluster SKILL.md files from the manifest. First preview with dry-run:
+
+```bash
+uv run ${extensionPath}/scripts/sync.py --dry-run --skills-dir ~/.gemini/skills
+```
+
+Show the preview to the user. If they confirm, apply:
+
+```bash
+uv run ${extensionPath}/scripts/sync.py --skills-dir ~/.gemini/skills
+```
+
+Report what changed.
+"""
