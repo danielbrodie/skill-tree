@@ -1,0 +1,10 @@
+{
+  "name": "skill-tree",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "Two-tier routing architecture for agent skills at scale.",
+  "license": "Apache-2.0",
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}
