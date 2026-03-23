@@ -73,14 +73,14 @@ A SessionStart hook runs `/check` automatically and alerts you if anything is wr
 
 ## How it works
 
-skill-tree keeps skills in two directories:
+**Two-hop routing:** The model sees cluster descriptions in its prompt. When it picks a cluster, it uses the `read` tool to load the cluster's SKILL.md, which contains a routing table. The routing table points to leaf skills by path. The model reads the right leaf and follows its instructions. Leaves have `disable-model-invocation: true` so they never appear in the prompt directly — they're only reachable through a cluster router.
 
 ```
-~/.claude/skills/           ← cluster routers (what the model sees)
+~/.claude/skills/           ← cluster routers (what the model sees in prompt)
   research-index/SKILL.md   ← routing table: "use librarium for X, notebooklm for Y"
   dev-tools/SKILL.md
 
-~/.claude/skills-library/   ← leaf skills (hidden from catalog, loaded on demand)
+~/.claude/skills-library/   ← leaf skills (hidden from prompt, loaded via read)
   librarium/SKILL.md
   github-ops/SKILL.md
   skill-tree/manifest.json  ← source of truth
@@ -88,11 +88,22 @@ skill-tree keeps skills in two directories:
 
 **manifest.json** defines the graph. `/setup` creates it, `/check` validates it. Cluster SKILL.md files are generated — edit the manifest, not the clusters.
 
-`/fetch` downloads skills from GitHub, shows you the full content, runs security checks (prompt injection, zero-width unicode, path traversal), and sandboxes new skills by default.
+**Additive by default:** When a manifest already exists, `/setup` only adds new skills as standalones — it won't blow away your existing clusters or manual edits. Use `--full` to regenerate the entire structure from scratch.
+
+**`/fetch` and sandboxing:** `/fetch` downloads skills from GitHub, shows you the full content, and runs security checks (prompt injection, zero-width unicode, path traversal). New skills are "sandboxed" — this means they get `disable-model-invocation: true` in their frontmatter so the model can't discover or invoke them until you explicitly add them to a cluster via the manifest.
 
 ## Cross-platform
 
-Works on Claude Code, Gemini CLI, OpenClaw, and Codex CLI. All scripts accept `--skills-dir` and `--library-dir` to target any platform's paths. OpenClaw uses a single directory (`~/.openclaw/skills/`) for both routers and leaves, hiding leaves via `disable-model-invocation` only. The `--codex` flag on sync generates `agents/openai.yaml` files for Codex compatibility.
+Works on Claude Code, Gemini CLI, OpenClaw, and Codex CLI. All scripts accept `--skills-dir` and `--library-dir` to target any platform's paths.
+
+**Platform notes:** The manifest schema is the same everywhere, but generated cluster SKILL.md files contain platform-specific paths (e.g., `~/.claude/skills-library/` vs `~/.openclaw/skills/`). Don't copy generated cluster files between platforms — share the manifest and run `/setup` on each platform to generate the right paths.
+
+| Platform | Routers | Leaves | Hiding mechanism |
+|----------|---------|--------|-----------------|
+| Claude Code | `~/.claude/skills/` | `~/.claude/skills-library/` | Directory separation + `disable-model-invocation` |
+| Gemini CLI | `~/.gemini/skills/` | `~/.claude/skills-library/` | Directory separation |
+| OpenClaw | `~/.openclaw/skills/` | `~/.openclaw/skills/` (same dir) | `disable-model-invocation` only |
+| Codex CLI | `~/.codex/skills/` | `~/.claude/skills-library/` | `agents/openai.yaml` (via `--codex`) |
 
 ## License
 
