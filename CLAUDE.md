@@ -5,7 +5,7 @@ Cross-platform skill clustering plugin. Repo at `~/Projects/skill-tree/`.
 ## Architecture
 
 - **Claude Code plugin** at repo root (`.claude-plugin/`, `skills/`, `hooks/`)
-- **Gemini extension** (`gemini-extension.json`, `GEMINI.md`, `commands/*.toml`)
+- **Gemini extension** (`gemini-extension.json`, `GEMINI.md`, `commands/*.toml`). The `name` field in the manifest must match the directory name.
 - **OpenClaw plugin** in `openclaw/` subdirectory (separate package with its own scripts copy)
 - **Codex CLI** uses scripts directly with `--codex` flag
 - Python scripts in `scripts/` are the shared engine — all platforms invoke them via `uv run`
