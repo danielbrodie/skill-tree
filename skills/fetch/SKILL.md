@@ -11,7 +11,7 @@ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/add.py "<url>"
 **Security flow:**
 1. The script fetches the SKILL.md and displays its FULL content
 2. It runs content policy checks and shows any warnings
-3. It finds the best cluster match via TF-IDF similarity
+3. It adds the skill as a sandboxed standalone
 4. It asks for confirmation before writing anything
 
 **Important:** New skills are sandboxed by default (`disable-model-invocation: true`). The user must explicitly enable them by editing the manifest and running `/setup`.

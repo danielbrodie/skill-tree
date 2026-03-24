@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["scikit-learn", "pyyaml"]
+# dependencies = ["pyyaml"]
 # ///
 """skill-tree add: fetch a skill from GitHub and wire it into the graph.
 
@@ -157,77 +157,6 @@ def fetch_skill_content(org: str, repo: str, skill_name: str, ref: str | None = 
         raise RuntimeError(f"Failed to fetch from GitHub: {e}") from e
 
 
-# ---------------------------------------------------------------------------
-# Cluster matching
-# ---------------------------------------------------------------------------
-
-
-def find_best_cluster(
-    skill_content: str,
-    skill_name: str,
-    manifest: Manifest,
-    library_dir: Path,
-) -> tuple[str | None, float]:
-    """Find the best matching cluster for a new skill.
-
-    Returns (cluster_name, similarity_score) or (None, 0.0).
-    """
-    if not manifest.clusters:
-        return None, 0.0
-
-    try:
-        from lib.cluster import SkillDocument, _build_document_text
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        from sklearn.metrics.pairwise import cosine_similarity
-    except ImportError:
-        return None, 0.0
-
-    # Build document for the new skill
-    fm = parse_frontmatter(Path("/dev/null"))  # won't actually read
-    # Parse the content directly
-    lines = skill_content.split("\n")
-    description = ""
-    name = skill_name
-    # Quick frontmatter extract
-    if lines and lines[0].strip() == "---":
-        for i, line in enumerate(lines[1:], 1):
-            if line.strip() == "---":
-                # Extract name and description from frontmatter
-                for fl in lines[1:i]:
-                    if fl.startswith("name:"):
-                        name = fl.split(":", 1)[1].strip().strip("\"'")
-                    elif fl.startswith("description:"):
-                        description = fl.split(":", 1)[1].strip().strip("\"'")
-                break
-
-    new_doc = SkillDocument(name=name, description=description, body_preview=skill_content[:2000])
-    new_text = _build_document_text(new_doc)
-
-    # Build documents for each cluster
-    cluster_texts: list[str] = []
-    cluster_names: list[str] = []
-    for cname, cluster in manifest.clusters.items():
-        # Use cluster description + leaf routing hints
-        parts = [cluster.description]
-        for leaf in cluster.leaves.values():
-            if leaf.routing_hint:
-                parts.append(leaf.routing_hint)
-        cluster_texts.append(" ".join(parts))
-        cluster_names.append(cname)
-
-    # TF-IDF similarity
-    all_texts = [new_text] + cluster_texts
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english")
-    tfidf = vectorizer.fit_transform(all_texts)
-
-    similarities = cosine_similarity(tfidf[0:1], tfidf[1:]).flatten()
-    best_idx = similarities.argmax()
-    best_score = float(similarities[best_idx])
-
-    if best_score < 0.05:
-        return None, best_score
-
-    return cluster_names[best_idx], best_score
 
 
 # ---------------------------------------------------------------------------
@@ -309,24 +238,16 @@ def main() -> None:
     # Find best cluster match
     if manifest_path.exists():
         manifest = load_manifest(manifest_path)
-        best_cluster, similarity = find_best_cluster(content, skill_name, manifest, args.library_dir)
     else:
         manifest = None
-        best_cluster, similarity = None, 0.0
 
-    if best_cluster:
-        print(f"Best cluster match: {Colors.GREEN}{best_cluster}{Colors.RESET} (similarity: {similarity:.2f})")
-    else:
-        print(f"No strong cluster match found. Will add as {Colors.YELLOW}standalone{Colors.RESET}.")
+    print(f"Will add as {Colors.YELLOW}standalone{Colors.RESET} (sandboxed). Run /setup to cluster.")
 
     # Summary
     print(f"\n{Colors.BOLD}Action:{Colors.RESET}")
     print(f"  Write to: {target_dir}/SKILL.md")
     print(f"  Sandbox: disable-model-invocation: true (default)")
-    if best_cluster:
-        print(f"  Add to cluster: {best_cluster}")
-    else:
-        print(f"  Add as standalone")
+    print(f"  Add as standalone")
     if commit_sha:
         print(f"  Source pin: {commit_sha[:12]}")
 

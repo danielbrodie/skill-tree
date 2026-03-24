@@ -9,7 +9,7 @@ uv run ${extensionPath}/scripts/add.py "{{args}}" --skills-dir ~/.gemini/skills
 **Security flow:**
 1. The script fetches the SKILL.md and displays its FULL content
 2. It runs content policy checks and shows any warnings
-3. It finds the best cluster match via TF-IDF similarity
+3. It adds the skill as a sandboxed standalone
 4. It asks for confirmation before writing anything
 
 New skills are sandboxed by default (`disable-model-invocation: true`). After adding, suggest running `/setup` to update cluster routing tables.
