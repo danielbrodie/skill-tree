@@ -7,13 +7,13 @@ This command handles the full setup pipeline. Run each step and present results 
 **Step 1: Bootstrap** — detect existing skills and create/update the manifest:
 
 ```bash
-uv run scripts/init.py
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/init.py
 ```
 
 **Step 2: Cluster** — get a rough grouping proposal:
 
 ```bash
-uv run scripts/scan.py --full
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/scan.py --full
 ```
 
 This produces a preview manifest at the default preview path. Read it:
@@ -43,19 +43,19 @@ cp ~/.claude/skills-library/skill-tree/preview/manifest.json ~/.claude/skills-li
 First preview:
 
 ```bash
-uv run scripts/sync.py --dry-run
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync.py --dry-run
 ```
 
 If the user confirms, apply:
 
 ```bash
-uv run scripts/sync.py
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync.py
 ```
 
 **Step 5: Verify** — confirm everything is clean:
 
 ```bash
-uv run scripts/status.py
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/status.py
 ```
 
 Present the final status with token savings.

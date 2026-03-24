@@ -2,10 +2,10 @@
 description: Fetch a skill from GitHub and wire it into the skill graph
 ---
 
-Fetch and install a skill from GitHub. Run:
+Fetch and install a skill from GitHub. Extract the URL from the user's message, then run:
 
 ```bash
-uv run scripts/add.py "<url>"
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/add.py "<url>"
 ```
 
 **Security flow:**

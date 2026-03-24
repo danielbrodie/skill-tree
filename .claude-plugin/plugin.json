@@ -1,6 +1,13 @@
 {
   "name": "skill-tree",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Two-tier routing architecture for agent skills at scale. Clusters skills into routers, validates graph integrity, and keeps catalog budgets under control.",
-  "homepage": "https://github.com/danielbrodie/skill-tree"
+  "author": {
+    "name": "Daniel Brodie",
+    "url": "https://github.com/danielbrodie"
+  },
+  "homepage": "https://github.com/danielbrodie/skill-tree",
+  "repository": "https://github.com/danielbrodie/skill-tree",
+  "license": "Apache-2.0",
+  "keywords": ["skills", "routing", "clustering", "organization", "token-optimization"]
 }

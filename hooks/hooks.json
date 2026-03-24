@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run scripts/check.py --quiet --notify 2>&1 || true"
+            "command": "uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check.py --quiet --notify 2>&1 || true"
           }
         ]
       }
