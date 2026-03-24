@@ -1,60 +1,67 @@
 ---
 name: setup
-description: Set up or rebuild the skill graph — bootstrap, cluster, and generate routing files
+description: Set up or rebuild the skill graph — scan skills, cluster them, generate routing files
 metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 ---
 
-This command handles the full setup pipeline. Run each step and present results between them.
+This command sets up the skill-tree manifest. You are the clustering algorithm.
 
-**Step 1: Bootstrap** — detect existing skills and create/update the manifest:
-
-```bash
-uv run {baseDir}/../scripts/init.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills
-```
-
-**Step 2: Cluster** — get a rough grouping proposal:
+**Step 1: Scan** — collect all skill names and descriptions:
 
 ```bash
-uv run {baseDir}/../scripts/scan.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills --full
+uv run {baseDir}/../scripts/scan.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills --format json
 ```
 
-This produces a preview manifest. Read it:
+Read the JSON output. This is every skill on disk with its name and description.
 
-```bash
-cat ~/.openclaw/skills/skill-tree/preview/manifest.json
+**Step 2: Cluster the skills.** Read all the descriptions and group them into 15-30 clusters based on semantic similarity — skills that would co-occur in a real user request belong together.
+
+For each cluster, produce:
+- **name**: a clear routing signal (2-3 words). Test: could a model read just this name and know whether to enter this cluster? Bad: `asc-app-app_id`. Good: `app-store-connect`.
+- **description**: a USE WHEN decision rule. "USE WHEN: the user asks about X, Y, or Z." Not a member list.
+- **leaves**: each with a `routingHint` that distinguishes it from siblings. "Use this when X, not Y."
+
+Skills that don't fit any cluster stay as standalones. That's fine — not everything clusters.
+
+**Step 3: Write the manifest.** Write the result as JSON to `~/.openclaw/skills/skill-tree/manifest.json` using this schema:
+
+```json
+{
+  "version": "1.0",
+  "unclusteredBudget": 25,
+  "clusters": {
+    "cluster-name": {
+      "description": "USE WHEN: ...",
+      "crossReferences": [],
+      "leaves": {
+        "skill-name": { "routingHint": "Use this when ..." }
+      }
+    }
+  },
+  "standalones": ["skill-a", "skill-b"],
+  "hotPath": [],
+  "referenceNodes": [],
+  "deprecated": []
+}
 ```
 
-**Step 3: Review and improve the clusters.** This is the critical step. The scan uses TF-IDF which groups by word overlap, not meaning. You are smarter than it. Review every cluster and fix problems:
+If a manifest already exists, read it first and preserve `hotPath`, `referenceNodes`, `deprecated`, and any `customInstructions` on existing clusters. Only change the clustering.
 
-- **Rename unclear labels.** `mcporter-comfyui` is useless — name it `media-tools` or `creative-pipeline`. Every cluster name must be a routing signal, not a member name. Test: could a model read just this name and know whether to enter this cluster?
-- **Rewrite descriptions.** Each description must be a routing instruction: "USE WHEN: the user asks about X, Y, or Z." Not a member list. Not a description repeat. A decision rule.
-- **Fix routing hints per leaf.** Each leaf's `routingHint` should say "use this when X, not Y" — distinguish it from siblings in the same cluster. If two leaves have the same hint, the model can't route between them.
-- **Move misplaced skills.** If a skill landed in the wrong cluster, move it. No cluster should span domains that wouldn't co-occur in a real user request.
-- **Merge small clusters.** Clusters under 3 skills should be merged with neighbors or made standalones.
-- **Split incoherent clusters.** If a cluster mixes unrelated skills, break it up.
-- **Decide standalones.** Some skills genuinely don't belong in any cluster — that's fine.
+Present the proposed clusters to the user before writing. Show cluster names, member counts, and descriptions. Ask for confirmation.
 
-Use the Edit tool to fix the preview manifest directly. When you're satisfied, copy it to the real manifest path:
-
-```bash
-cp ~/.openclaw/skills/skill-tree/preview/manifest.json ~/.openclaw/skills/skill-tree/manifest.json
-```
-
-**Step 4: Sync** — generate cluster routing files from the improved manifest:
-
-First preview:
+**Step 4: Sync** — generate cluster routing files:
 
 ```bash
 uv run {baseDir}/../scripts/sync.py --dry-run --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills
 ```
 
-If the user confirms, apply:
+Show preview. If confirmed:
 
 ```bash
 uv run {baseDir}/../scripts/sync.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills
 ```
 
-**Step 5: Verify** — confirm everything is clean:
+**Step 5: Verify:**
 
 ```bash
 uv run {baseDir}/../scripts/status.py --skills-dir ~/.openclaw/skills --library-dir ~/.openclaw/skills

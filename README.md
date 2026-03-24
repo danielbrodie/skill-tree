@@ -90,7 +90,7 @@ A SessionStart hook runs `/check` automatically and alerts you if anything is wr
 
 **Manifest categories:** Beyond clusters and standalones, the manifest supports `hotPath` (skills that stay in the scan path and are always visible — e.g., your most-used skill), `referenceNodes` (utility skills with `disable-model-invocation` that are loaded explicitly by other skills, not routed), and `deprecated` (phased-out skills, hidden from catalog).
 
-**Additive by default:** When a manifest already exists, `/setup` only adds new skills as standalones — it won't blow away your existing clusters or manual edits. Use `--full` to regenerate the entire structure from scratch.
+**Clustering is model-assisted.** `/setup` collects all skill descriptions and the model groups them semantically — no algorithm, no threshold tuning. The model understands that `asc-build-lifecycle` and `asc-testflight-orchestration` belong together even when they don't share words. It proposes clusters with clear routing names and descriptions, you review, it writes the manifest.
 
 **`/fetch` and sandboxing:** `/fetch` downloads skills from GitHub, shows you the full content, and runs security checks (prompt injection, zero-width unicode, path traversal). New skills are "sandboxed" — this means they get `disable-model-invocation: true` in their frontmatter so the model can't discover or invoke them until you explicitly add them to a cluster via the manifest.
 

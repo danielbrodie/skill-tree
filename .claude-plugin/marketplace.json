@@ -9,7 +9,7 @@
       "name": "skill-tree",
       "source": "./",
       "description": "Two-tier routing architecture for agent skills at scale. Clusters skills into routers, validates graph integrity, and keeps catalog budgets under control.",
-      "version": "0.4.0"
+      "version": "0.5.0"
     }
   ]
 }
