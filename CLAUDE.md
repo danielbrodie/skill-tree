@@ -50,8 +50,8 @@ Command names were chosen to avoid collision with Claude Code built-ins (`init`,
 
 ## Key design decisions
 
-- TF-IDF scan produces a rough draft; the model reviewing `/setup` is expected to fix labels, descriptions, and routing hints
-- `scan.py` is additive by default when a manifest exists — only adds new skills as standalones. Use `--full` to regenerate.
+- Clustering is done by the model, not an algorithm. `scan.py` collects descriptions; the `/setup` skill instructs the model to group them semantically and write the manifest. No TF-IDF, no scikit-learn, no threshold.
+- `scan.py` reports which skills are new (not in manifest) vs already tracked.
 - `manifest.json` is the source of truth. Cluster SKILL.md files are generated artifacts. Never edit clusters directly.
 - Fetched skills are sandboxed (`disable-model-invocation: true`) until explicitly added to a cluster.
 
