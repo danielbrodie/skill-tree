@@ -23,7 +23,7 @@ For each cluster, produce:
 
 Skills that don't fit any cluster stay as standalones. That's fine — not everything clusters.
 
-**Step 3: Write the manifest.** Write the result as JSON to `~/.openclaw/skills/skill-tree/manifest.json` using this schema:
+**Step 3: Write the manifest.** Write the result as JSON to `~/.openclaw/skills/skill-tree/preview/manifest.json` first (as a preview), then copy to the real path after the user confirms. Use this schema:
 
 ```json
 {
@@ -47,7 +47,11 @@ Skills that don't fit any cluster stay as standalones. That's fine — not every
 
 If a manifest already exists, read it first and preserve `hotPath`, `referenceNodes`, `deprecated`, and any `customInstructions` on existing clusters. Only change the clustering.
 
-Present the proposed clusters to the user before writing. Show cluster names, member counts, and descriptions. Ask for confirmation.
+Present the proposed clusters to the user before writing. Show cluster names, member counts, and descriptions. Ask for confirmation. Then copy to the real path:
+
+```bash
+mkdir -p ~/.openclaw/skills/skill-tree && cp ~/.openclaw/skills/skill-tree/preview/manifest.json ~/.openclaw/skills/skill-tree/manifest.json
+```
 
 **Step 4: Sync** — generate cluster routing files:
 
