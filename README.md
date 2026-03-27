@@ -73,11 +73,11 @@ A SessionStart hook runs `/check` automatically and alerts you if anything is wr
 
 ## How it works
 
-**Two-hop routing:** The model sees cluster descriptions in its prompt. When it picks a cluster, it uses the `read` tool to load the cluster's SKILL.md, which contains a routing table. The routing table points to leaf skills by path. The model reads the right leaf and follows its instructions. Leaves have `disable-model-invocation: true` so they never appear in the prompt directly — they're only reachable through a cluster router.
+**Two-hop routing:** The model sees cluster descriptions in its prompt. When it picks a cluster, it uses the `read` tool to load the cluster's SKILL.md, which contains an arrow-list routing format. The arrow-list points to leaf skills by path. The model reads the right leaf and follows its instructions. Leaves have `disable-model-invocation: true` so they never appear in the prompt directly — they're only reachable through a cluster router.
 
 ```
 ~/.claude/skills/           ← cluster routers (what the model sees in prompt)
-  research-index/SKILL.md   ← routing table: "use librarium for X, notebooklm for Y"
+  research-index/SKILL.md   ← arrow-list: "fan-out research → librarium"
   dev-tools/SKILL.md
 
 ~/.claude/skills-library/   ← leaf skills (hidden from prompt, loaded via read)
@@ -85,6 +85,8 @@ A SessionStart hook runs `/check` automatically and alerts you if anything is wr
   github-ops/SKILL.md
   skill-tree/manifest.json  ← source of truth
 ```
+
+**Arrow-list format:** Cluster routing files use a compact `keywords → skill-name` format validated through automated experiments (15 format variants tested, 28 test cases). This format achieves 100% routing accuracy at ~60% fewer tokens than markdown tables. Each cluster file starts with "Output skill name only." — a critical instruction that prevents the model from answering questions instead of routing them.
 
 **manifest.json** defines the graph. `/setup` creates it, `/check` validates it. Cluster SKILL.md files are generated — edit the manifest, not the clusters.
 

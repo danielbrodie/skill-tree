@@ -24,9 +24,27 @@ class TestGenerateClusterSkillmd:
 
         assert "name: research-index" in content
         assert 'description: "Research tools"' in content
-        assert "## Routing table" in content
-        assert "| `librarium` | Fan-out research. |" in content
-        assert "| `notebooklm` | Deep research. |" in content
+        assert "Output skill name only." in content
+        assert "- Fan-out research. → `librarium`" in content
+        assert "- Deep research. → `notebooklm`" in content
+
+    def test_arrow_list_format(self):
+        """Arrow-list format: hint → `skill-name`."""
+        cluster = Cluster(
+            name="test",
+            description="Test",
+            leaves={
+                "leaf-a": LeafEntry(routing_hint="SSH, machines"),
+                "leaf-b": LeafEntry(routing_hint="Secrets, API keys"),
+            },
+        )
+        content = generate_cluster_skillmd(cluster)
+
+        assert "- SSH, machines → `leaf-a`" in content
+        assert "- Secrets, API keys → `leaf-b`" in content
+        # No table syntax
+        assert "| Skill |" not in content
+        assert "|-------|" not in content
 
     def test_custom_instructions(self):
         cluster = Cluster(
@@ -39,10 +57,10 @@ class TestGenerateClusterSkillmd:
 
         assert "## Decision tree" in content
         assert "Use X for Y." in content
-        # Custom instructions appear before routing table
+        # Custom instructions appear before routing list
         ci_pos = content.index("Decision tree")
-        rt_pos = content.index("Routing table")
-        assert ci_pos < rt_pos
+        route_pos = content.index("→ `leaf1`")
+        assert ci_pos < route_pos
 
     def test_cross_references(self):
         cluster = Cluster(
@@ -75,7 +93,7 @@ class TestGenerateClusterSkillmd:
             leaves={"leaf1": LeafEntry(routing_hint=None)},
         )
         content = generate_cluster_skillmd(cluster)
-        assert "(no routing hint)" in content
+        assert "(no routing hint) → `leaf1`" in content
 
     def test_escaped_quotes_in_description(self):
         cluster = Cluster(
