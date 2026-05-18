@@ -106,7 +106,9 @@ class TestManifestProtection:
             "referenceNodes": ["e"],
         }))
         refs = manifest_referenced_skills(mfp)
-        assert refs == {"a", "b", "c", "d", "e"}
+        # Cluster key "c1" is also a referenced (router) skill name — see
+        # the hotfix in main commit f0d13cf.
+        assert refs == {"c1", "a", "b", "c", "d", "e"}
 
     def test_manifest_referenced_skills_missing_file(self, tmp_path):
         refs = manifest_referenced_skills(tmp_path / "absent.json")
