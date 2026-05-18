@@ -136,13 +136,13 @@ class TestClusterTooLarge:
         assert len(issues) == 0
 
     def test_too_large(self):
-        leaves = {f"leaf-{i:02d}": LeafEntry() for i in range(20)}
+        leaves = {f"leaf-{i:02d}": LeafEntry() for i in range(25)}
         manifest = Manifest(
             clusters={"big": Cluster(name="big", description="test", leaves=leaves)}
         )
         issues = check_cluster_too_large(manifest)
         assert len(issues) == 1
-        assert "20 leaves" in issues[0].message
+        assert "25 leaves" in issues[0].message
 
 
 class TestCrossrefMissing:
