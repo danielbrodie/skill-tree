@@ -31,11 +31,34 @@ class CorpusRecord:
 
 
 def decode_project_dir(jsonl_path: Path) -> str:
-    """Project directory names are slug-encoded — restore the original path."""
+    """Project directory names are slug-encoded — Claude Code replaces both `/` and `-`
+    in the original path with `-`, so decoding is ambiguous.
+
+    Strategy: walk the slug left-to-right, at each step taking the LONGEST prefix that
+    exists on disk as a real directory. This disambiguates `osc-record` (literal dash)
+    from `osc/record` (slash) using the filesystem as ground truth. Falls back to the
+    naive decode when nothing matches (project may have moved or been deleted).
+    """
     slug = jsonl_path.parent.name
     if not slug.startswith("-"):
         return slug
-    return "/" + slug[1:].replace("-", "/")
+    base = slug[1:]
+    parts = base.split("-")
+
+    cur = Path("/")
+    i = 0
+    while i < len(parts):
+        matched_j: int | None = None
+        for j in range(len(parts), i, -1):
+            candidate = cur / "-".join(parts[i:j])
+            if candidate.exists():
+                matched_j = j
+                cur = candidate
+                break
+        if matched_j is None:
+            return "/" + base.replace("-", "/")
+        i = matched_j
+    return str(cur)
 
 
 def iter_messages(jsonl_path: Path):
