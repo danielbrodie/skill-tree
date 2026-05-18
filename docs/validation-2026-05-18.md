@@ -158,3 +158,30 @@ Up from ~7% before. The pivot's win condition (BRO-181) is now backed by data, n
 
 - 11.4% of corpus invocations (~15 records) reference skills not present in any local cache. Of those, `obsidian-vault` accounts for 7 — likely a Felix-hosted skill that the OpenClaw box surfaces but Claude Code doesn't index. Documenting; not a BRO-184 blocker.
 - The categorizer over-relies on "Daniel always uses superpowers" as a near-universal pick. That's correct per the data but worth flagging — if his workflow shifts, the categorizer needs to drop the assumption.
+
+## Second finding: per-project signal doesn't beat the global-popular baseline
+
+`simulate.py` now has a `global_popular_reach` baseline — every project provisions the *same* top-N globally-popular skills, ignoring project signals entirely. This is what a "no AI categorizer at all" version of skill-tree would do.
+
+| N | global-popular (no project signal) | per-project naive top-N (LOO, history-only) |
+|---|---|---|
+| 3 | 64.39% | 65.91% |
+| 5 | **78.03%** | 74.24% |
+| 7 | **80.30%** | 74.24% |
+| 10 | **82.58%** | 75.76% |
+
+**At N ≥ 5, ignoring project signals beats per-project history.** Daniel's workflow is so consistent across projects (the four `superpowers:*` skills dominate everywhere) that project context doesn't add value at typical budgets.
+
+This **contradicts BRO-181's central claim** ("per-project beats global cluster by 11×"). The 11× was an artifact of comparing against the unfixed cluster manifest. Once plugin skills are indexed (BRO-184) and a fair global baseline is run, **per-project at N=5 actually underperforms global-popular by 3.8 percentage points.**
+
+### What this means for the ADR
+
+The decision in `docs/adr/0001-routing-vs-provisioning.md` was made on incomplete evidence. Three possible reactions:
+
+1. **Reverse the ADR.** Ship "install the top-10 globally popular skills" as the default. No per-project categorizer. Simplest product, beats the alternative at the metric we defined.
+2. **Keep per-project, but for a *different* reason.** The recall@N metric doesn't reward surfacing the right *long-tail* skill (e.g. `pp-sentry` for a Sentry-using project) — it just counts hits. Per-project might be valuable for the cases it uniquely catches, even if aggregate recall is similar. But that requires a different metric.
+3. **Hybrid.** Ship a global-popular base layer (always-on top-N) plus a per-project promotion mechanism for the project-specific tail. This is closer to what the user already articulated on 2026-05-18 ("there's no reason for the iPhone skill to exist in my JavaScript project") — but global-popular doesn't put iPhone skills in JavaScript projects to begin with, because they aren't globally popular.
+
+The honest read on the current corpus is that **option 1 is what the data says.** Option 3 might be what the user actually wants if a different metric (e.g. "right tool for the rare task") gives a different answer. Option 2 requires defining that other metric before it can be acted on.
+
+This warrants a new ADR (or an amendment to 0001) before any more code is built on the BRO-181 decision.

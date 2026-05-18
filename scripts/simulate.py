@@ -85,6 +85,47 @@ def per_project_naive_reach(records: list[CorpusRecord], budget: int) -> float:
     return hits / total if total else 0.0
 
 
+def global_popular_reach(records: list[CorpusRecord], budget: int) -> float:
+    """% reachable if every project provisions the SAME top-`budget` globally-popular
+    skills. Floor for any project-aware categorizer — if this beats per-project,
+    project signals don't add value."""
+    if not records:
+        return 0.0
+    hits = 0
+    total = 0
+    for i, held_out in enumerate(records):
+        others = records[:i] + records[i + 1 :]
+        top_n = {s for s, _ in Counter(o.skill for o in others).most_common(budget)}
+        total += 1
+        if held_out.skill in top_n:
+            hits += 1
+    return hits / total
+
+
+def per_project_reach_breakdown(
+    records: list[CorpusRecord], budget: int
+) -> list[tuple[str, int, float]]:
+    """Per-project LOO recall. Returns [(project, invocation_count, recall)] sorted desc."""
+    by_project: dict[str, list[CorpusRecord]] = defaultdict(list)
+    for r in records:
+        by_project[r.project_dir].append(r)
+
+    out: list[tuple[str, int, float]] = []
+    for project, recs in by_project.items():
+        if len(recs) < 2:  # LOO degenerates on single records
+            out.append((project, len(recs), float("nan")))
+            continue
+        hits = 0
+        for i, held_out in enumerate(recs):
+            others = recs[:i] + recs[i + 1 :]
+            top_n = {s for s, _ in Counter(o.skill for o in others).most_common(budget)}
+            if held_out.skill in top_n:
+                hits += 1
+        out.append((project, len(recs), hits / len(recs)))
+    out.sort(key=lambda x: -x[1])
+    return out
+
+
 def estimate_prelude_tokens(manifest: dict, skill_descriptions: dict[str, str]) -> dict[str, int]:
     """Rough token estimate (chars/4) for each mode's prelude."""
 
@@ -142,6 +183,7 @@ def main() -> int:
         "--skills-dir", default=str(Path.home() / ".claude" / "skills")
     )
     parser.add_argument("--budget", type=int, default=5, help="Per-project provisioning N")
+    parser.add_argument("--per-project", action="store_true", help="Show per-project breakdown")
     args = parser.parse_args()
 
     records = build_corpus(Path(args.projects_root), args.days)
@@ -163,6 +205,8 @@ def main() -> int:
     # Recompute flat-mode prelude token cost from the expanded catalog
     flat_full = sum(max(1, len(c.get("description", "")) // 4) for c in catalog)
 
+    global_pop = global_popular_reach(records, args.budget)
+
     print(f"# Baseline — {len(records)} records, last {args.days} days\n")
     print(f"Catalog: {len(catalog_names)} skills ({sum(1 for c in catalog if c.get('origin') == 'personal')} personal, {sum(1 for c in catalog if (c.get('origin') or '').startswith('plugin:'))} plugin)\n")
     print(f"Per-project budget N = {args.budget}\n")
@@ -170,10 +214,20 @@ def main() -> int:
     print("|---|---|---|")
     print(f"| flat (full catalog) | {flat_reach:.2%} | ~{flat_full:,} |")
     print(f"| cluster (current global manifest) | {cluster_r:.2%} | ~{tokens['cluster']:,} |")
-    print(f"| per-project naive top-{args.budget} (LOO) | {pp_reach:.2%} | ~{args.budget * (flat_full // max(1, len(catalog_names))):,} (per project avg) |")
+    print(f"| global-popular top-{args.budget} (no project signal) | {global_pop:.2%} | ~{args.budget * (flat_full // max(1, len(catalog_names))):,} (fixed) |")
+    print(f"| per-project naive top-{args.budget} (LOO, history-only) | {pp_reach:.2%} | ~{args.budget * (flat_full // max(1, len(catalog_names))):,} (per project) |")
     print()
     print("Reach@catalog = fraction of invocations whose skill was in the mode's catalog.")
     print("Prelude tokens = chars/4 of always-on prompt fragments.")
+    print()
+
+    if args.per_project:
+        print("\n## Per-project breakdown (LOO)\n")
+        print("| Project | Invocations | Recall@top-N |")
+        print("|---|---|---|")
+        for proj, n, recall in per_project_reach_breakdown(records, args.budget):
+            recall_str = "n/a" if recall != recall else f"{recall:.0%}"  # NaN check
+            print(f"| `{proj}` | {n} | {recall_str} |")
     return 0
 
 
