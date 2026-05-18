@@ -1,6 +1,6 @@
 # The AI-skill ecosystem, mapped
 
-Living document. The model reads this when reasoning about user requests like "what skills exist for X" or "how do I install Y on Z?" Last refreshed: 2026-05-18 (post-survey).
+Living document. The model reads this when reasoning about user requests like "what skills exist for X" or "how do I install Y on Z?" Last refreshed: 2026-05-18 (post-survey + reload-vs-update finding).
 
 This is companion to [`registry-map.md`](./registry-map.md) (which covers *where* skills live on a single machine). This doc covers *what* exists in the wider world.
 
@@ -108,6 +108,13 @@ The model should recognize these patterns when running `/skill-tree:audit` or `/
 3. **Manifest-vs-filesystem drift in skill-tree.** `~/.claude/skills-library/skill-tree/manifest.json` references a skill that's not on disk. Fix: install the missing skill via the appropriate installer, or remove the manifest reference.
 
 4. **Plugin cache staleness.** `~/.claude/plugins/cache/<plugin>/<old-version>/` and `<plugin>/<newer-version>/` both exist. Fix: manually `rm -rf` the old version dirs (`claude plugin gc` doesn't currently exist as a CLI subcommand — verified 2026-05-18). The plugin loader uses the newest version automatically; old dirs are dead disk.
+
+   **Sub-finding (2026-05-18):** `/reload-plugins` does **not** re-fetch from the marketplace. It reloads existing on-disk plugin state into the running CC process. To actually pull a new plugin version when the marketplace has updated, run:
+   ```
+   claude plugin marketplace update <marketplace>
+   claude plugin update <plugin>@<marketplace>
+   ```
+   Then restart Claude Code (the loader caches plugin state at process start; `/reload-plugins` post-update reloads the new cache, but the available-skills list won't refresh until restart). Common symptom: user pushes a new version, runs `/reload-plugins`, and the new skill never appears in the available-skills list — that's because the marketplace fetch never happened.
 
 5. **Symlink rot.** `~/.claude/skills/X -> ~/.agents/skills/X` but the target was removed. Fix: re-sync the installer that created the symlink, or remove the dead symlink.
 
