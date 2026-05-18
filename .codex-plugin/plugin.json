@@ -1,7 +1,7 @@
 {
   "name": "skill-tree",
-  "version": "0.5.0",
-  "description": "Per-project skill provisioning + global cluster fallback. AI-categorizer picks the right skills for each project.",
+  "version": "0.6.0",
+  "description": "Institutional-knowledge layer for the AI-skill ecosystem. Documents every agent platform, skill packager, installer, and failure mode — and uses the AI inside Codex to navigate them.",
   "author": {
     "name": "Daniel Brodie",
     "email": "11337994+danielbrodie@users.noreply.github.com",

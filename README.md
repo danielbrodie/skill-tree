@@ -4,14 +4,30 @@
 
 # skill-tree
 
-skill-tree decides **which skills get loaded into Claude Code's prompt for each project**, and gives you the data to prove it's the right set.
+skill-tree is **the institutional-knowledge layer for the AI-skill ecosystem.** It runs inside your AI agent (Claude Code, Codex, Gemini CLI, OpenClaw) and uses that agent to navigate the multi-vendor, multi-tool reality of how skills are packaged, installed, organized, and removed across ~15 agent platforms.
 
-Two layers:
+**The product is the encoded expertise.** [`docs/ecosystem-map.md`](docs/ecosystem-map.md) catalogues every notable agent platform, every popular skill packager (obra/superpowers, mattpocock/skills, vercel-labs/skills, anthropics/claude-plugins-official, rudrankriyam/asc-skills, mvanhorn/printing-press-library, and more), every installer (`claude plugin`, `codex plugin`, `gemini extensions`, `npx skills`, hand-install), every frontmatter convention, and every common failure mode. [`docs/registry-map.md`](docs/registry-map.md) catalogues every place a skill can live on a single machine.
 
-- **Global base.** The handful of skills you reach for in every project (in the author's corpus: 4 `superpowers:*` skills account for ~70% of all invocations). skill-tree's `/skill-tree:provision --global-suggest` surfaces them from your own session history so the always-on layer reflects what you actually use.
-- **Per-project tail.** When a project has a distinctive need (a Sentry-using Rails repo wants `pp-sentry`; an App Store release project wants `asc-release-flow`), `/skill-tree:provision` adds those skills into `<project>/.claude/skills/` without polluting other projects' preludes.
+The Python scripts in `scripts/` are eyes and arms; the docs are the brain.
 
-See [`docs/adr/0002-hybrid-global-base-plus-per-project-tail.md`](docs/adr/0002-hybrid-global-base-plus-per-project-tail.md) for the design decision; [`docs/measurement.md`](docs/measurement.md) and [`docs/validation-2026-05-18.md`](docs/validation-2026-05-18.md) for the data behind it.
+## What skill-tree does, concretely
+
+- **`/skill-tree:audit`** — survey every skill registry on this machine, cross-reference with every installer's lock file, detect every failure-mode pattern, surface ranked findings with the safe-action command for each (Phase 1 of [BRO-190](https://linear.app/brodiegraphics/issue/BRO-190))
+- **`/skill-tree:catalog <topic>`** — given a need ("I want a skill for Stripe webhooks"), search known skill repos and recommend installs (Phase 2)
+- **`/skill-tree:diagnose <problem>`** — walk the failure-mode signatures to debug specific issues (Phase 3)
+- **`/skill-tree:install <ref>`** — dispatch to the right installer based on the ref type (Phase 4)
+- **`/skill-tree:provision`** — per-project skill provisioning (the ADR 0002 hybrid model)
+- **`/skill-tree:sync`** — reconcile project manifest drift
+- **`/skill-tree:archive`** — non-destructively move unused personal skills out of the always-on prelude
+- **`/skill-tree:check`** — health check on the manifest graph
+
+## Design history
+
+- [ADR 0001](docs/adr/0001-routing-vs-provisioning.md) — original "pivot to per-project" decision (superseded same day by ADR 0002 after validation)
+- [ADR 0002](docs/adr/0002-hybrid-global-base-plus-per-project-tail.md) — hybrid global-popular base + per-project tail
+- [ADR 0003](docs/adr/0003-institutional-knowledge.md) — **skill-tree as institutional-knowledge layer** (the current product framing)
+- [`docs/measurement.md`](docs/measurement.md) — outcome metric definition
+- [`docs/validation-2026-05-18.md`](docs/validation-2026-05-18.md) — the validation that drove the pivots
 
 ## What it solves
 
