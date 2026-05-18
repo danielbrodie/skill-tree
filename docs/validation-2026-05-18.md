@@ -174,6 +174,32 @@ Up from ~7% before. The pivot's win condition (BRO-181) is now backed by data, n
 
 This **contradicts BRO-181's central claim** ("per-project beats global cluster by 11×"). The 11× was an artifact of comparing against the unfixed cluster manifest. Once plugin skills are indexed (BRO-184) and a fair global baseline is run, **per-project at N=5 actually underperforms global-popular by 3.8 percentage points.**
 
+### Per-project breakdown — where each mode actually wins
+
+`simulate.py --per-project --budget 5` across all 14 projects in the corpus:
+
+| Project | Invocations | Per-project recall@5 (LOO) |
+|---|---|---|
+| osc-record worktree | 38 | **97%** |
+| specimen | 14 | **100%** |
+| vegasmatt-cruise-intake | 38 | **76%** |
+| osc-record | 17 | **71%** |
+| subagents | 4 | **100%** |
+| vault | 4 | 50% |
+| Desktop | 4 | **0%** |
+| ai-consulting | 4 | **0%** |
+| /Users/daniel | 3 | **0%** |
+| baccarat-coach | 2 | **0%** |
+| (4 projects with n=1) | 1 | n/a (LOO degenerate) |
+
+The pattern: **per-project recall is excellent (≥71%) on the high-volume, workflow-consistent projects, and zero on the small ad-hoc ones.** The ad-hoc projects (Desktop, ai-consulting, ~/, baccarat-coach) collectively pull the aggregate per-project number down.
+
+This sharpens the hybrid case for ADR 0002:
+- Global-popular base layer catches the **cold-start / ad-hoc / low-volume** case. The user opening Claude Code in `~/Desktop` to do something one-off shouldn't need to wait for per-project history to accumulate.
+- Per-project tail catches the **established-workflow / project-specific** case. Once a project has ≥10 invocations of history, per-project picks become reliably good.
+
+The right threshold is approximately n ≥ 10. Below that, fall back to global-popular. Above that, supplement with per-project picks. This isn't yet encoded anywhere — it's a finding to fold into the BRO-185 decision.
+
 ### What this means for the ADR
 
 The decision in `docs/adr/0001-routing-vs-provisioning.md` was made on incomplete evidence. Three possible reactions:
