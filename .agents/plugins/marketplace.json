@@ -5,11 +5,11 @@
       "name": "skill-tree",
       "source": {
         "source": "local",
-        "path": ".."
+        "path": "."
       },
       "policy": {
         "installation": "AVAILABLE",
-        "authentication": "NONE"
+        "authentication": "ON_INSTALL"
       },
       "category": "Productivity"
     }

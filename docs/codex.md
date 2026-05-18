@@ -8,14 +8,16 @@ This is the per-project provisioning surface for OpenAI Codex CLI, paired with t
 # 1. Clone the repo somewhere stable
 git clone https://github.com/danielbrodie/skill-tree ~/.codex/marketplaces/skill-tree
 
-# 2. Register as a Codex marketplace
-codex plugin marketplace add ~/.codex/marketplaces/skill-tree/.codex-plugin
+# 2. Register as a Codex marketplace — point at the REPO ROOT, not .codex-plugin/
+codex plugin marketplace add ~/.codex/marketplaces/skill-tree
 
-# 3. Install the plugin
-codex plugin install skill-tree@danielbrodie
+# 3. Enable the plugin in ~/.codex/config.toml
+echo '[plugins."skill-tree@danielbrodie"]' >> ~/.codex/config.toml
 ```
 
-After install, Codex will pick up `skills/` automatically and load `provision`, `setup`, `check`, `fetch`, and `skill-analysis`.
+Codex's marketplace convention: it looks for `<root>/.agents/plugins/marketplace.json` to enumerate plugins, then for each plugin entry it looks at `<plugin-path>/.codex-plugin/plugin.json` for the actual manifest. For skill-tree, `<plugin-path>` is the repo root itself (single-plugin marketplace).
+
+After enabling, restart Codex. The bundled `skills/` directory becomes available: `provision`, `setup`, `check`, `fetch`, `audit`, `sync`, `skill-analysis`.
 
 ## Differences from Claude Code
 
