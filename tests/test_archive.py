@@ -16,6 +16,7 @@ from archive import (  # noqa: E402
     find_latest_archive,
     last_invocation_by_skill,
     list_unused_personal_skills,
+    manifest_referenced_skills,
     unarchive,
 )
 from measure import CorpusRecord  # noqa: E402
@@ -64,7 +65,7 @@ class TestListUnused:
             "used-long-ago": (now - timedelta(days=120)).isoformat(),
         }
         candidates = list_unused_personal_skills(skills, last_used, window_days=60)
-        names = {n for n, _ in candidates}
+        names = {n for n, _, _ in candidates}
         assert names == {"unused", "used-long-ago"}
 
     def test_handles_missing_skills_dir(self, tmp_path):
@@ -79,8 +80,37 @@ class TestListUnused:
         _make_skill(skills, "real")
         (skills / "not-a-skill").mkdir()  # no SKILL.md
         candidates = list_unused_personal_skills(skills, {}, window_days=60)
-        names = {n for n, _ in candidates}
+        names = {n for n, _, _ in candidates}
         assert names == {"real"}
+
+
+class TestManifestProtection:
+    def test_flags_manifest_referenced_skills(self, tmp_path):
+        skills = tmp_path / "skills"
+        skills.mkdir()
+        for name in ["alpha", "beta", "gamma"]:
+            _make_skill(skills, name)
+
+        refs = {"alpha", "gamma"}
+        candidates = list_unused_personal_skills(skills, {}, window_days=60, manifest_referenced=refs)
+        by_name = {n: ref for n, _, ref in candidates}
+        assert by_name == {"alpha": True, "beta": False, "gamma": True}
+
+    def test_manifest_referenced_skills_reads_clusters_and_standalones(self, tmp_path):
+        import json
+        mfp = tmp_path / "manifest.json"
+        mfp.write_text(json.dumps({
+            "clusters": {"c1": {"leaves": {"a": {}, "b": {}}}},
+            "standalones": ["c"],
+            "hotPath": ["d"],
+            "referenceNodes": ["e"],
+        }))
+        refs = manifest_referenced_skills(mfp)
+        assert refs == {"a", "b", "c", "d", "e"}
+
+    def test_manifest_referenced_skills_missing_file(self, tmp_path):
+        refs = manifest_referenced_skills(tmp_path / "absent.json")
+        assert refs == set()
 
 
 class TestArchiveSkills:

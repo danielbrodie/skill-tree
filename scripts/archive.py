@@ -37,16 +37,45 @@ def last_invocation_by_skill(records) -> dict[str, str]:
     return out
 
 
+def manifest_referenced_skills(manifest_path: Path) -> set[str]:
+    """Return the set of skill names that appear anywhere in the skill-tree manifest.
+
+    Archiving a manifest-referenced skill would break cluster routing. The archive
+    command treats these as off-limits even if they have zero invocations.
+    """
+    import json
+    if not manifest_path.exists():
+        return set()
+    try:
+        m = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return set()
+    referenced: set[str] = set()
+    for cluster in m.get("clusters", {}).values():
+        referenced.update(cluster.get("leaves", {}).keys())
+    referenced.update(m.get("standalones", []))
+    referenced.update(m.get("hotPath", []))
+    referenced.update(m.get("referenceNodes", []))
+    return referenced
+
+
 def list_unused_personal_skills(
-    skills_dir: Path, last_used: dict[str, str], window_days: int
-) -> list[tuple[str, str | None]]:
-    """Return [(skill_name, last_iso_or_None)] for personal skills not invoked in window."""
+    skills_dir: Path,
+    last_used: dict[str, str],
+    window_days: int,
+    manifest_referenced: set[str] | None = None,
+) -> list[tuple[str, str | None, bool]]:
+    """Return [(skill_name, last_iso_or_None, is_manifest_referenced)] for personal
+    skills not invoked in window. The third element flags skills the archive command
+    should refuse to move because they're load-bearing in the skill-tree manifest.
+    """
     if not skills_dir.exists():
         return []
     now = datetime.now(tz=timezone.utc)
     cutoff = (now - __import__("datetime").timedelta(days=window_days)).isoformat()
+    refs = manifest_referenced or set()
 
-    out: list[tuple[str, str | None]] = []
+    out: list[tuple[str, str | None, bool]] = []
     for skill_dir in sorted(skills_dir.iterdir()):
         if not skill_dir.is_dir():
             continue
@@ -54,10 +83,8 @@ def list_unused_personal_skills(
             continue
         name = skill_dir.name
         ts = last_used.get(name)
-        # Personal skill matches are by bare name; plugin invocations look like
-        # "plugin:skill" and don't intersect personal-skill names.
         if ts is None or ts < cutoff:
-            out.append((name, ts))
+            out.append((name, ts, name in refs))
     return out
 
 
@@ -123,6 +150,12 @@ def main() -> int:
     sub.add_argument("--apply", action="store_true", help="Move unused skills to archive")
     sub.add_argument("--unarchive", metavar="NAME", help="Restore a skill from archive")
 
+    parser.add_argument(
+        "--force-manifest-referenced",
+        action="store_true",
+        help="Archive even skills referenced in the skill-tree manifest (will break routing)",
+    )
+
     args = parser.parse_args()
     skills_dir = Path(args.skills_dir)
 
@@ -138,28 +171,52 @@ def main() -> int:
     projects_root = Path.home() / ".claude" / "projects"
     records = build_corpus(projects_root, args.days)
     last_used = last_invocation_by_skill(records)
-    candidates = list_unused_personal_skills(skills_dir, last_used, args.window_days)
+    manifest_path = (
+        Path.home() / ".claude" / "skills-library" / "skill-tree" / "manifest.json"
+    )
+    manifest_refs = manifest_referenced_skills(manifest_path)
+    candidates = list_unused_personal_skills(
+        skills_dir, last_used, args.window_days, manifest_refs
+    )
 
     if args.list:
         print(f"# Personal-skill archive candidates — unused in last {args.window_days} days\n")
         print(f"Corpus: {len(records)} records, {len(last_used)} skills with at least one invocation\n")
-        print(f"Skills directory: {skills_dir}\n")
-        print(f"| Skill | Last invocation |")
-        print(f"|---|---|")
-        for name, ts in candidates:
+        print(f"Skills directory: {skills_dir}")
+        print(f"Manifest: {manifest_path} ({len(manifest_refs)} referenced skills)\n")
+        print(f"| Skill | Last invocation | Manifest-referenced? |")
+        print(f"|---|---|---|")
+        for name, ts, ref in candidates:
             ts_str = ts[:10] if ts else "never (in last %dd)" % args.days
-            print(f"| `{name}` | {ts_str} |")
+            ref_str = "**yes — protected**" if ref else "no"
+            print(f"| `{name}` | {ts_str} | {ref_str} |")
         print()
-        print(f"Total candidates: {len(candidates)}")
+        archivable = [c for c in candidates if not c[2]]
+        protected = [c for c in candidates if c[2]]
+        print(f"Total candidates: {len(candidates)} ({len(archivable)} archivable, {len(protected)} protected by manifest)")
         print()
-        print("To archive: `uv run scripts/archive.py --apply --window-days %d`" % args.window_days)
+        print("Protected skills are leaves of clusters or otherwise tracked in")
+        print("~/.claude/skills-library/skill-tree/manifest.json. Archiving them would")
+        print("break the routing graph. Use `--force-manifest-referenced` to override.")
         return 0
 
     if args.apply:
         archive_root = skills_dir.parent / f"skills-archive-{datetime.now().strftime('%Y-%m-%d-%H%M')}"
-        names = [n for n, _ in candidates]
+        if args.force_manifest_referenced:
+            names = [n for n, _, _ in candidates]
+        else:
+            names = [n for n, _, ref in candidates if not ref]
+            protected = [n for n, _, ref in candidates if ref]
+            if protected:
+                print(
+                    f"Skipping {len(protected)} manifest-referenced skills "
+                    "(use --force-manifest-referenced to override):",
+                    file=sys.stderr,
+                )
+                for n in protected:
+                    print(f"  - {n}", file=sys.stderr)
         if not names:
-            print("(no unused skills to archive)")
+            print("(no unarchivable skills — everything is either invoked or manifest-protected)")
             return 0
         moved = archive_skills(skills_dir, names, archive_root)
         print(f"Archived {len(moved)} skills to {archive_root}/")
