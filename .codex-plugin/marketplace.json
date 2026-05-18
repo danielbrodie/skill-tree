@@ -1,0 +1,17 @@
+{
+  "name": "danielbrodie",
+  "plugins": [
+    {
+      "name": "skill-tree",
+      "source": {
+        "source": "local",
+        "path": ".."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "NONE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
