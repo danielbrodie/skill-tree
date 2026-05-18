@@ -153,6 +153,114 @@ class TestApplySkills:
         assert set(m["skills"]) == {"tdd", "diagnose"}
 
 
+class TestGlobalSuggest:
+    """The --global-suggest CLI mode is the BRO-185 / ADR 0002 entry point.
+
+    Behavior tested via subprocess so the argparse dispatch is also exercised.
+    """
+
+    def test_prints_top_n_table_when_corpus_has_data(self, tmp_path, monkeypatch):
+        # Build a fake projects root with one session containing 3 Skill invocations
+        projects = tmp_path / ".claude" / "projects" / "-Users-fake-proj"
+        projects.mkdir(parents=True)
+        from datetime import datetime, timezone, timedelta
+
+        recent = (datetime.now(tz=timezone.utc) - timedelta(days=1)).isoformat()
+        events = [
+            {
+                "uuid": "u1", "parentUuid": None, "timestamp": recent,
+                "message": {"role": "user", "content": "do thing"},
+            },
+            {
+                "uuid": "u2", "parentUuid": "u1", "timestamp": recent,
+                "message": {
+                    "role": "assistant",
+                    "content": [{
+                        "type": "tool_use", "name": "Skill",
+                        "input": {"skill": "alpha"},
+                    }],
+                },
+            },
+            {
+                "uuid": "u3", "parentUuid": "u2", "timestamp": recent,
+                "message": {
+                    "role": "assistant",
+                    "content": [{
+                        "type": "tool_use", "name": "Skill",
+                        "input": {"skill": "alpha"},
+                    }],
+                },
+            },
+            {
+                "uuid": "u4", "parentUuid": "u3", "timestamp": recent,
+                "message": {
+                    "role": "assistant",
+                    "content": [{
+                        "type": "tool_use", "name": "Skill",
+                        "input": {"skill": "beta"},
+                    }],
+                },
+            },
+        ]
+        (projects / "session.jsonl").write_text(
+            "\n".join(json.dumps(e) for e in events) + "\n"
+        )
+
+        # Empty skills lib so neither alpha nor beta will be "in catalog"
+        skills_lib = tmp_path / "skills"
+        skills_lib.mkdir()
+
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        import subprocess
+        result = subprocess.run(
+            [
+                "python3",
+                str(Path(__file__).resolve().parent.parent / "scripts" / "provision.py"),
+                "--global-suggest",
+                "--top-n",
+                "5",
+                "--days",
+                "30",
+                "--skills-library",
+                str(skills_lib),
+            ],
+            capture_output=True, text=True, env={**__import__("os").environ, "HOME": str(tmp_path)},
+        )
+        assert result.returncode == 0, result.stderr
+        assert "alpha" in result.stdout
+        assert "beta" in result.stdout
+        # alpha got 2 invocations, beta got 1, so alpha should rank #1
+        alpha_idx = result.stdout.index("alpha")
+        beta_idx = result.stdout.index("beta")
+        assert alpha_idx < beta_idx
+
+    def test_handles_empty_corpus(self, tmp_path):
+        projects = tmp_path / ".claude" / "projects"
+        projects.mkdir(parents=True)
+        skills_lib = tmp_path / "skills"
+        skills_lib.mkdir()
+
+        import subprocess
+        result = subprocess.run(
+            [
+                "python3",
+                str(Path(__file__).resolve().parent.parent / "scripts" / "provision.py"),
+                "--global-suggest",
+                "--top-n",
+                "5",
+                "--skills-library",
+                str(skills_lib),
+            ],
+            capture_output=True, text=True,
+            env={**__import__("os").environ, "HOME": str(tmp_path)},
+        )
+        assert result.returncode == 1
+        # Message is "(no Skill invocations in last N days)" — match case-insensitively
+        combined = (result.stdout + result.stderr).lower()
+        assert "no skill invocations" in combined
+
+
 class TestProjectManifestRoundTrip:
     def test_write_and_load(self, tmp_path):
         manifest = {

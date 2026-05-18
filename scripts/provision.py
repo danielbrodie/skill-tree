@@ -288,6 +288,11 @@ def main() -> int:
         action="store_true",
         help="Print the current project manifest",
     )
+    sub.add_argument(
+        "--global-suggest",
+        action="store_true",
+        help="Suggest the top-N most-invoked skills from session history for the global base layer (ADR 0002)",
+    )
 
     parser.add_argument(
         "--skills",
@@ -298,6 +303,18 @@ def main() -> int:
         "--reason",
         default="",
         help="Why these skills (with --apply, recorded in manifest)",
+    )
+    parser.add_argument(
+        "--top-n",
+        type=int,
+        default=10,
+        help="N for --global-suggest (default 10)",
+    )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=60,
+        help="Lookback window for --global-suggest (default 60)",
     )
 
     args = parser.parse_args()
@@ -331,6 +348,31 @@ def main() -> int:
             print(f"(no manifest at {root / PROJECT_MANIFEST_REL})")
             return 1
         print(json.dumps(m, indent=2))
+        return 0
+
+    if args.global_suggest:
+        from measure import build_corpus  # local import to avoid cost on other paths
+        from collections import Counter
+
+        projects_root = Path.home() / ".claude" / "projects"
+        records = build_corpus(projects_root, args.days)
+        if not records:
+            print(f"(no Skill invocations in last {args.days} days)")
+            return 1
+        catalog_names = {c["name"] for c in collect_global_catalog(skills_dir)}
+        counter: Counter[str] = Counter(r.skill for r in records)
+        top = counter.most_common(args.top_n)
+
+        print(f"# Global base suggestion — top {args.top_n} skills, last {args.days} days\n")
+        print(f"Corpus: {len(records)} records, {len(counter)} unique skills\n")
+        print("| Rank | Skill | Invocations | In catalog? |")
+        print("|---|---|---|---|")
+        for rank, (skill, n) in enumerate(top, 1):
+            in_cat = "yes" if skill in catalog_names else "**no — uninstalled?**"
+            print(f"| {rank} | `{skill}` | {n} | {in_cat} |")
+        print()
+        print("Per ADR 0002, these are the skills that would make up the global-popular base layer.")
+        print("Skills not in catalog are invoked but missing locally — review whether to install or retire.")
         return 0
 
     return 0
