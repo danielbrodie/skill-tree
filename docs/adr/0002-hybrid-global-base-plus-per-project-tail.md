@@ -1,9 +1,9 @@
 # ADR 0002 — Hybrid: global-popular base + per-project tail
 
-- **Status:** Proposed (supersedes the implementation defaults in [ADR 0001](./0001-routing-vs-provisioning.md))
-- **Date:** 2026-05-18
-- **Tracking issue:** [BRO-185](https://linear.app/brodiegraphics/issue/BRO-185)
-- **Amends:** ADR 0001 (per-project provisioning as primary mode)
+- **Status:** Accepted (supersedes [ADR 0001](./0001-routing-vs-provisioning.md))
+- **Date:** 2026-05-18 — ratified 2026-05-18
+- **Tracking issue:** [BRO-185](https://linear.app/brodiegraphics/issue/BRO-185) (Done)
+- **Supersedes:** ADR 0001 (per-project provisioning as primary mode)
 
 ## Context
 

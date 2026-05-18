@@ -1,9 +1,12 @@
 # ADR 0001 — Global clusters vs per-project provisioning
 
-- **Status:** Accepted
-- **Date:** 2026-05-18
-- **Tracking issue:** [BRO-181](https://linear.app/brodiegraphics/issue/BRO-181)
+- **Status:** Superseded by [ADR 0002](./0002-hybrid-global-base-plus-per-project-tail.md) on 2026-05-18
+- **Date:** 2026-05-18 (same-day reversal after the BRO-184 / BRO-185 validation)
+- **Tracking issue:** [BRO-181](https://linear.app/brodiegraphics/issue/BRO-181) (Done — closed without ratification)
+- **Original status:** Accepted (briefly, before validation)
 - **Supersedes:** the implicit "global clustering is the right shape" assumption from skill-tree v0.5.
+
+> **Note (2026-05-18):** This ADR was superseded the same day it was written. The 11× advantage cited below was measured against the unfixed cluster baseline (which missed 88% of invocations because plugin skills weren't indexed — fixed by [BRO-184](https://linear.app/brodiegraphics/issue/BRO-184)). After adding a fair `global_popular` baseline (BRO-185), the picture flipped. ADR 0002 records the corrected design. This file stays in the repo as a record of "what we believed before validation."
 
 ## Context
 
