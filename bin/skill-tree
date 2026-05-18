@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# skill-tree — thin dispatcher for the bundled Python scripts.
+#
+# Resolves the plugin root from one of three sources, in priority order:
+#   1. SKILL_TREE_ROOT env var (explicit override)
+#   2. CLAUDE_PLUGIN_ROOT env var (set by Claude Code)
+#   3. This script's own location (../). Works for any install layout where
+#      bin/skill-tree sits at <plugin-root>/bin/skill-tree.
+#
+# Subcommands map to scripts/<name>.py. Unknown subcommands print usage.
+
+set -euo pipefail
+
+resolve_root() {
+  if [[ -n "${SKILL_TREE_ROOT:-}" ]]; then
+    echo "$SKILL_TREE_ROOT"; return
+  fi
+  if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+    echo "$CLAUDE_PLUGIN_ROOT"; return
+  fi
+  # Fall back to "wherever this script lives" — works for any platform
+  # that lays out bin/skill-tree at <plugin-root>/bin/skill-tree.
+  local self="${BASH_SOURCE[0]}"
+  while [[ -L "$self" ]]; do
+    local dir
+    dir="$(cd -P "$(dirname "$self")" && pwd)"
+    self="$(readlink "$self")"
+    [[ "$self" != /* ]] && self="$dir/$self"
+  done
+  cd -P "$(dirname "$self")/.." && pwd
+}
+
+ROOT="$(resolve_root)"
+SCRIPTS="$ROOT/scripts"
+
+usage() {
+  cat <<EOF
+skill-tree — dispatcher for bundled scripts
+
+Usage: skill-tree <subcommand> [args...]
+
+Subcommands (any *.py under scripts/):
+EOF
+  for f in "$SCRIPTS"/*.py; do
+    [[ -f "$f" ]] || continue
+    name=$(basename "$f" .py)
+    [[ "$name" == "__init__" || "$name" == lib ]] && continue
+    echo "  $name"
+  done
+  cat <<EOF
+
+Environment:
+  SKILL_TREE_ROOT     Override plugin root (default: \$CLAUDE_PLUGIN_ROOT or
+                      derived from this script's location)
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 0
+fi
+
+CMD="$1"; shift
+
+if [[ "$CMD" == "-h" || "$CMD" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+# Allow hyphen-style subcommands: `sync-project` -> sync_project.py
+CMD_UNDER="${CMD//-/_}"
+SCRIPT="$SCRIPTS/$CMD_UNDER.py"
+
+if [[ ! -f "$SCRIPT" ]]; then
+  echo "skill-tree: unknown subcommand: $CMD" >&2
+  echo "Run 'skill-tree --help' for the list." >&2
+  exit 2
+fi
+
+exec uv run "$SCRIPT" "$@"

@@ -1,0 +1,39 @@
+{
+  "name": "skill-tree",
+  "version": "0.5.0",
+  "description": "Per-project skill provisioning + global cluster fallback. AI-categorizer picks the right skills for each project.",
+  "author": {
+    "name": "Daniel Brodie",
+    "email": "11337994+danielbrodie@users.noreply.github.com",
+    "url": "https://github.com/danielbrodie"
+  },
+  "homepage": "https://github.com/danielbrodie/skill-tree",
+  "repository": "https://github.com/danielbrodie/skill-tree",
+  "license": "Apache-2.0",
+  "keywords": [
+    "skills",
+    "routing",
+    "clustering",
+    "organization",
+    "token-optimization",
+    "per-project"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "skill-tree",
+    "shortDescription": "Per-project skill provisioning for Codex",
+    "longDescription": "Pick the right skills for each project automatically. Solves the 'iPhone skills in a JavaScript project' problem by provisioning ~5 relevant skills into <project>/.claude/skills/ instead of leaving the full global catalog in every prelude.",
+    "developerName": "Daniel Brodie",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/danielbrodie/skill-tree",
+    "defaultPrompt": [
+      "Provision skills for this project",
+      "What skills does this project actually need?",
+      "Set up skill-tree here"
+    ]
+  }
+}

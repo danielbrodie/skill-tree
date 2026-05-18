@@ -224,16 +224,19 @@ def check_unclustered_budget(
     return issues
 
 
+MAX_CLUSTER_LEAVES = 20
+
+
 def check_cluster_too_large(manifest: Manifest) -> list[Issue]:
-    """WARNING: Cluster has more than 15 leaves."""
+    """WARNING: Cluster has more than MAX_CLUSTER_LEAVES leaves."""
     issues: list[Issue] = []
     for cluster in manifest.clusters.values():
-        if len(cluster.leaves) > 15:
+        if len(cluster.leaves) > MAX_CLUSTER_LEAVES:
             issues.append(
                 Issue(
                     Severity.WARNING,
                     "cluster-too-large",
-                    f"cluster '{cluster.name}' has {len(cluster.leaves)} leaves (max 15)",
+                    f"cluster '{cluster.name}' has {len(cluster.leaves)} leaves (max {MAX_CLUSTER_LEAVES})",
                     cluster.name,
                 )
             )
