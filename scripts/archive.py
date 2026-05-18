@@ -51,6 +51,9 @@ def manifest_referenced_skills(manifest_path: Path) -> set[str]:
     except (OSError, json.JSONDecodeError):
         return set()
     referenced: set[str] = set()
+    # Cluster keys themselves are router-skill names that live in ~/.claude/skills/.
+    # Archiving the router breaks the whole cluster.
+    referenced.update(m.get("clusters", {}).keys())
     for cluster in m.get("clusters", {}).values():
         referenced.update(cluster.get("leaves", {}).keys())
     referenced.update(m.get("standalones", []))
