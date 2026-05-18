@@ -119,6 +119,8 @@ Don't auto-apply. Walk the user through findings one at a time:
 
 Record each action to the audit log when applied. Skip cleanly when declined.
 
+**Report-only findings are valid.** Not every finding has a clean action. Cross-host invocation residue (failure mode #9) often resolves to "user is invoking a remote skill via a bridge" — no local action needed. Surface it, explain the bridge, move on. Don't fabricate an action for the sake of having one.
+
 ## Notes
 
 - This skill assumes the model can read sibling docs and reason about them. That's the institutional-knowledge premise.
