@@ -220,10 +220,25 @@ def write_project_manifest(root: Path, manifest: dict) -> None:
     p.write_text(json.dumps(manifest, indent=2) + "\n")
 
 
+def sha256_of_skill_md(skill_dir: Path) -> str | None:
+    """SHA256 of the SKILL.md file in a skill directory. Used for drift detection."""
+    import hashlib
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.exists():
+        return None
+    try:
+        return hashlib.sha256(skill_md.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
 def apply_skills(
     root: Path, skill_names: list[str], reason: str, skills_dir: Path
 ) -> dict:
-    """Copy each named skill into the project's .claude/skills/, update manifest."""
+    """Copy each named skill into the project's .claude/skills/, update manifest.
+
+    Records each source skill's SHA256 (BRO-187) so sync can detect drift later.
+    """
     now = datetime.now(timezone.utc).isoformat()
     manifest = load_project_manifest(root) or {
         "version": "1.0",
@@ -250,6 +265,7 @@ def apply_skills(
             "source": str(src),
             "reason": reason,
             "syncedAt": now,
+            "sourceHash": sha256_of_skill_md(src),
         }
         manifest["auditLog"].append(
             {"at": now, "action": "added", "skill": name, "reason": reason}
