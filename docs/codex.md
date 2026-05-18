@@ -26,11 +26,28 @@ After install, Codex will pick up `skills/` automatically and load `provision`, 
 | Per-project skills location | `<project>/.claude/skills/` | Same — `<project>/.claude/skills/` (cross-CLI convention) |
 | Slash command prefix | `/skill-tree:` | `/skill-tree:` (parity) |
 
-## Known caveats (filed as follow-ups to BRO-183)
+## Known caveats
 
 1. **No SessionStart hook surface in Codex.** The "you have 5 errors in skill-tree" status nudge from Claude Code doesn't have an equivalent. Workaround: run `/skill-tree:check` after `codex` opens.
-2. **`${CLAUDE_PLUGIN_ROOT}` is Claude-specific.** Some bundled SKILL.md files reference it. For Codex parity, those skills will either need runtime path detection or per-platform substitution at install time. Filed as a follow-up; for now, copy them to absolute paths or use scripts via `uv run` from a known location.
-3. **Codex marketplaces are local-path-based today.** Once Codex supports remote marketplaces (analogous to Claude Code's `plugin marketplace add <github-url>`), this install path simplifies. Until then, clone-then-register is the pattern.
+2. **Codex marketplaces are local-path-based today.** Once Codex supports remote marketplaces (analogous to Claude Code's `plugin marketplace add <github-url>`), this install path simplifies. Until then, clone-then-register is the pattern.
+
+## What got fixed under BRO-186
+
+Previously, SKILL.md files referenced `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/foo.py`. The `CLAUDE_PLUGIN_ROOT` env var is Claude Code-specific — on Codex (and Gemini CLI) it's undefined, so those commands silently failed.
+
+Replaced with `${CLAUDE_PLUGIN_ROOT}/bin/skill-tree foo` — a thin bash dispatcher at the plugin root. The wrapper resolves the plugin root in this priority order:
+
+1. `SKILL_TREE_ROOT` env var (explicit override)
+2. `CLAUDE_PLUGIN_ROOT` env var (set by Claude Code)
+3. The wrapper's own location (`bin/../`) — works whenever bin/skill-tree sits at `<plugin-root>/bin/skill-tree`
+
+Codex users only need to set `SKILL_TREE_ROOT` once if `CLAUDE_PLUGIN_ROOT` isn't set:
+
+```bash
+export SKILL_TREE_ROOT=~/.codex/marketplaces/skill-tree
+```
+
+Or invoke the wrapper by absolute path (`/path/to/skill-tree/bin/skill-tree provision --list-candidates`) — it self-resolves via its own location.
 
 ## Status
 

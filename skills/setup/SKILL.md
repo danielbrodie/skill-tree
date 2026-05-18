@@ -7,7 +7,7 @@ This command sets up the skill-tree manifest. You are the clustering algorithm.
 **Step 1: Scan** — collect all skill names and descriptions:
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/scan.py --format json
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree scan --format json
 ```
 
 Read the JSON output. This is every skill on disk with its name and description.
@@ -54,19 +54,19 @@ mkdir -p ~/.claude/skills-library/skill-tree && cp ~/.claude/skills-library/skil
 **Step 4: Sync** — generate cluster routing files:
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync.py --dry-run
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync --dry-run
 ```
 
 Show preview. If confirmed:
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync.py
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync
 ```
 
 **Step 5: Verify:**
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/status.py
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree status
 ```
 
 Present the final status with token savings.

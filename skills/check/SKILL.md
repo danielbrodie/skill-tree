@@ -5,7 +5,7 @@ description: Check skill graph health — validation, cluster overview, and toke
 Run the status check:
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/status.py
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree status
 ```
 
 Present the output. Highlight:

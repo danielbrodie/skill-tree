@@ -7,7 +7,7 @@ This command provisions a per-project skill set into the current project. You ar
 **Step 1 — list candidates**:
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/provision.py --list-candidates
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --list-candidates
 ```
 
 Read the JSON output. It has three top-level keys:
@@ -40,7 +40,7 @@ Ask the user to confirm or edit the list.
 **Step 4 — apply:**
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/provision.py --apply --skills=tdd,diagnose,improve-codebase-architecture --reason="Python+pytest repo; CLAUDE.md emphasizes red-green-refactor"
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --apply --skills=tdd,diagnose,improve-codebase-architecture --reason="Python+pytest repo; CLAUDE.md emphasizes red-green-refactor"
 ```
 
 The script copies each chosen skill from `~/.claude/skills/<name>/` into `<project-root>/.claude/skills/<name>/` and writes the manifest at `<project-root>/.claude/.skilltree.json`.
@@ -48,7 +48,7 @@ The script copies each chosen skill from `~/.claude/skills/<name>/` into `<proje
 **Step 5 — verify:**
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/provision.py --show
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --show
 ```
 
 Confirm the manifest reflects what was applied. Stop.

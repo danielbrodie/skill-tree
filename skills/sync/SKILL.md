@@ -7,7 +7,7 @@ This command reconciles drift between a project's `.claude/skills/` and the sour
 **Step 1 — show what's drifted:**
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync_project.py --dry-run
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync-project --dry-run
 ```
 
 The output is a table with one row per skill in the project manifest:
@@ -22,17 +22,17 @@ The output is a table with one row per skill in the project manifest:
 
 - **Apply only safe changes** — re-copy stale, restore missing, leave local edits alone:
   ```bash
-  uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync_project.py --apply
+  ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync-project --apply
   ```
 
 - **Also prune orphans** — additionally remove project copies whose source is gone:
   ```bash
-  uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync_project.py --apply --prune
+  ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync-project --apply --prune
   ```
 
 - **Force overwrite local edits** — dangerous, clobbers user changes:
   ```bash
-  uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync_project.py --apply --overwrite
+  ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync-project --apply --overwrite
   ```
 
 Default to `--apply` (option 1) unless the user explicitly asks for orphan removal or overwrite. The audit log in `.claude/.skilltree.json` records every action.
@@ -40,7 +40,7 @@ Default to `--apply` (option 1) unless the user explicitly asks for orphan remov
 **Step 3 — verify:**
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sync_project.py --dry-run
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree sync-project --dry-run
 ```
 
 If everything is clean, sync is done.
