@@ -76,7 +76,7 @@ The model should recognize these patterns when running `/skill-tree:audit` or `/
 
 3. **Manifest-vs-filesystem drift in skill-tree.** `~/.claude/skills-library/skill-tree/manifest.json` references a skill that's not on disk. Fix: install the missing skill via the appropriate installer, or remove the manifest reference.
 
-4. **Plugin cache staleness.** `~/.claude/plugins/cache/<plugin>/<old-version>/` and `<plugin>/<newer-version>/` both exist. Fix: `claude plugin gc` or remove the old version dir manually.
+4. **Plugin cache staleness.** `~/.claude/plugins/cache/<plugin>/<old-version>/` and `<plugin>/<newer-version>/` both exist. Fix: manually `rm -rf` the old version dirs (`claude plugin gc` doesn't currently exist as a CLI subcommand — verified 2026-05-18). The plugin loader uses the newest version automatically; old dirs are dead disk.
 
 5. **Symlink rot.** `~/.claude/skills/X -> ~/.agents/skills/X` but the target was removed. Fix: re-sync the installer that created the symlink, or remove the dead symlink.
 
