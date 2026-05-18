@@ -1,6 +1,6 @@
 # The AI-skill ecosystem, mapped
 
-Living document. The model reads this when reasoning about user requests like "what skills exist for X" or "how do I install Y on Z?" Last refreshed: 2026-05-18.
+Living document. The model reads this when reasoning about user requests like "what skills exist for X" or "how do I install Y on Z?" Last refreshed: 2026-05-18 (post-survey).
 
 This is companion to [`registry-map.md`](./registry-map.md) (which covers *where* skills live on a single machine). This doc covers *what* exists in the wider world.
 
@@ -37,6 +37,21 @@ This is companion to [`registry-map.md`](./registry-map.md) (which covers *where
 | [charleswiltgen/axiom](https://github.com/charleswiltgen/axiom) | Charles Wiltgen | Axiom-specific developer skills. | `npx skills add charleswiltgen/axiom` |
 | [gracefullight/stock-checker](https://github.com/gracefullight/stock-checker) | gracefullight | Stock-checking skill. | `npx skills add gracefullight/stock-checker` |
 | [danielbrodie/skill-tree](https://github.com/danielbrodie/skill-tree) | Daniel Brodie | This repo. Meta: a tool for managing skills across agents. | See README. |
+| [jscraik/Agent-Skills](https://github.com/jscraik/Agent-Skills) | jscraik | Large general-purpose agent-skill collection — top GitHub-search hit for "agent skills" in May 2026. PR-heavy contributor base. | Hand-install or `npx skills add jscraik/Agent-Skills` |
+| [rjmurillo/ai-agents](https://github.com/rjmurillo/ai-agents) | rjmurillo | Another large agent-skills monorepo with active contributions. | `npx skills add rjmurillo/ai-agents` |
+| [nexu-io/open-design](https://github.com/nexu-io/open-design) | nexu-io | Open-source local-first alternative to Anthropic's Claude Design. Shipped within days of Claude Design's launch ([r/PromptEngineering 2026-05-13](https://www.reddit.com/r/PromptEngineering/comments/1t6ssn5/claude_design_is_cool_but_the_opensource/)). | Hand-install |
+
+### Claude Code workflow plugins (new category, May 2026)
+
+A wave of opinionated Claude Code workflow plugins shipped in the last month. These bundle skills + hooks + multi-agent orchestration for a specific philosophy of how to work with Claude Code, distinct from atomic skills.
+
+| Plugin | Source | Focus | Install |
+|---|---|---|---|
+| Nelson | ~300★ MIT, [r/ClaudeCode 2026-05-08](https://www.reddit.com/r/ClaudeCode/comments/1t7l60y/nelson_v223_shipped_and_a_benchmark_i_built/) | Multi-agent coordination skill for Claude Code using a Royal Navy metaphor (admiral/captains/ships/crew). Author ships a benchmark of 13 agent/harness/skill setups on a discrete-event simulation task; Nelson ranked 3rd. **First public skill benchmark in the corpus.** | See Reddit post for repo |
+| [itsribbZ/Godspeed](https://github.com/itsribbZ/Godspeed) | MIT, [r/ClaudeAI 2026-05-12](https://www.reddit.com/r/ClaudeAI/) | Open-source plugin adds S0-S5 tier routing + multi-agent orchestration to Claude Code. One-command install, 17 skills bundled. | `claude plugin install godspeed@itsribbZ/Godspeed` (or repo-direct) |
+| AI Sorcery | [r/ClaudeWorkflows 2026-05-09](https://www.reddit.com/r/ClaudeWorkflows/comments/1t5w8zt/workflow_ai_sorcery_a_collection_of_claude_code/) | Claude Code skills bundle: VM sandboxing, git hooks, iterative-dev workflows. | See Reddit post |
+| OpenSwarm | [r/AISEOInsider 2026-05-12](https://www.reddit.com/r/AISEOInsider/comments/1tb7ul7/i_used_openswarm_ai_for_parallel_workflows/) | Parallel workflows across multiple AI agents. | See Reddit post |
+| Glyphh AI | [r/ClaudeCode 2026-05-11](https://www.reddit.com/r/ClaudeCode/comments/1t3zf7y/i_built_a_workspace_with_3500_mcp_apps_multimodel/) | Workspace combining 3,500+ MCP apps, multi-model AI, skills, automation, and dev tooling — driven by Claude Code. | See Reddit post |
 
 ## Installers
 
@@ -45,10 +60,26 @@ This is companion to [`registry-map.md`](./registry-map.md) (which covers *where
 | **Anthropic Claude Code plugin marketplace** (`claude plugin`) | Claude Code only | Official, curated, atomic install/uninstall. Maintains `~/.claude/plugins/installed_plugins.json`. | `claude plugin uninstall <name>@<marketplace>` |
 | **OpenAI Codex CLI plugin system** (`codex plugin`) | Codex only | Similar to Claude Code. Local marketplaces today; remote may come. | `codex plugin uninstall <name>@<marketplace>` |
 | **Google Gemini CLI extensions** (`gemini extensions`) | Gemini only | Built-in extension manager. | `gemini extensions uninstall <name>` |
-| **vercel-labs/skills CLI** (`npx skills`) | Multi-agent fan-out | Installs one repo into N agents' skill dirs via symlinks. Lock file at `~/.agents/.skill-lock.json` tracks `skillFolderHash`. Configurable `lastSelectedAgents`. | `npx skills remove <name>` |
+| **vercel-labs/skills CLI** (`npx skills`) | Multi-agent fan-out | Installs one repo into N agents' skill dirs via symlinks. Lock file at `~/.agents/.skill-lock.json` tracks `skillFolderHash`. Configurable `lastSelectedAgents`. As of May 2026 the de-facto standard for multi-agent installs. | `npx skills remove <name>` |
+| **[iflytek/skillhub](https://github.com/iflytek/skillhub)** (`skillhub` CLI) | Enterprise on-premise | Self-hosted, open-source agent skill registry for enterprises. Publish & version skill packages, govern with RBAC and audit logs, deploy on-premise with Docker/Kubernetes. Fills the "Enterprise / private skill repos" gap. Built by iFlytek (Chinese AI company). `skillhub install <name> --agent codex`. | `skillhub uninstall <name>` |
+| **Verified Skill** (in-development) | Multi-platform (claimed 49) with security | Security checks + evals + package manager. Built during [Anthropic's Opus 4.7 hackathon, pushed publicly the week of 2026-05-15](https://www.reddit.com/r/ClaudeAI/comments/1srg22m/got_into_anthropics_opus_47_hackathon_pushing/). First installer with first-class security review baked in. Track for production-readiness. | TBD |
+| **`sx`** (community installer) | Multi-agent versioned config | Versioned package management for AI Skills, Hooks, and Configurations across teams and AI clients. Smaller footprint than vercel-labs but explicit team-config support ([r/ClaudeWorkflows 2026-05-15](https://www.reddit.com/r/ClaudeWorkflows/comments/1te87t5/workflow_using_sx_for_versioned_package/)). | See post |
 | **Matt Pocock bootstrap** (`/setup-matt-pocock-skills` from within an agent) | Per-repo | Scaffolds `AGENTS.md`/`CLAUDE.md` agent-skills block + `docs/agents/` so downstream skills know the repo's conventions. | Not really "uninstalled"; edit the repo's AGENTS.md directly. |
 | **skill-tree** (`/skill-tree:provision`) | Per-project | AI-categorized provisioning into `<project>/.claude/skills/`. Manifest at `.claude/.skilltree.json`. | `/skill-tree:sync --apply --prune` |
 | **Hand install** (`git clone`) | Anything | Maximum flexibility. | `rm -rf <dir>` |
+
+## Awesome-list aggregators (discovery tier)
+
+How new users find skills. Not packagers themselves — curated indexes of who's publishing what. Worth tracking because they're typically how skill-tree users will discover candidate skill repos.
+
+| Aggregator | Focus |
+|---|---|
+| [VoltAgent/awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) | General-purpose awesome-list for agent skills across platforms. |
+| [GetBindu/awesome-claude-code-and-skills](https://github.com/GetBindu/awesome-claude-code-and-skills) | Claude Code-focused curated list of skills + best practices. |
+
+## How skills are being evaluated (emerging, May 2026)
+
+For most of 2025-early 2026 there was no public benchmark of skill quality. [Nelson v2.2.3](https://www.reddit.com/r/ClaudeCode/comments/1t7l60y/nelson_v223_shipped_and_a_benchmark_i_built/) (2026-05-08) is the first public comparison: 13 agent/harness/skill setups on a discrete-event simulation task. Expect more skill benchmarks to emerge — this is a real gap in the ecosystem and someone's clearly going to fill it. skill-tree's own `docs/measurement.md` (the Reach@catalog metric) is a separate-but-related contribution; it measures the *catalog*, not the *skill*.
 
 ## Frontmatter conventions
 
@@ -102,9 +133,10 @@ The institutional consensus, as of May 2026, drawn from Anthropic's engineering 
 
 ## Where this map is incomplete
 
-- **Less-popular installers.** There are likely 3–5 niche skill managers I don't know about.
-- **Enterprise / private skill repos.** Companies running internal skill marketplaces aren't covered.
-- **Cross-host / fleet skill management.** A meaningful pattern (Felix-style personal AI deployments, plus company-wide agent fleets) that no public tool addresses well.
+- **~~Less-popular installers~~** — May 2026 survey filled this gap: Verified Skill, `sx`, iflytek/skillhub are now covered.
+- **~~Enterprise / private skill repos~~** — iflytek/skillhub fills this. Other enterprise registries likely exist but aren't public.
+- **Cross-host / fleet skill management.** A meaningful pattern (Felix-style personal AI deployments, plus company-wide agent fleets) that no public tool addresses well. *Still open.*
 - **The bleeding edge.** Agent platforms ship monthly. The list above lags by weeks.
+- **VS Code's new "Agents window"** — local AI models in VS Code that still require a GitHub Copilot plan. Mentioned in [r/LocalLLaMA 2026-05-14](https://www.reddit.com/r/LocalLLaMA/) but not yet a first-class skill consumer. Track for first-class skill API.
 
-PRs welcome to keep this current.
+PRs welcome to keep this current. The 2026-05-18 survey added 12 new entries — that's a normal monthly cadence.
