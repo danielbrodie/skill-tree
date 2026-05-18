@@ -77,32 +77,131 @@ def collect_project_signals(root: Path) -> dict:
     return signals
 
 
-def collect_global_catalog(skills_dir: Path) -> list[dict]:
-    """List every skill in the global library with its name+description."""
+def _read_skill_md(skill_md: Path) -> tuple[str, str]:
+    """Return (name, description) extracted from a SKILL.md's frontmatter."""
+    try:
+        text = skill_md.read_text()
+    except (OSError, UnicodeDecodeError):
+        return "", ""
+    name, desc, in_fm = "", "", False
+    for line in text.splitlines():
+        if line.strip() == "---":
+            if not in_fm:
+                in_fm = True
+                continue
+            break
+        if not in_fm:
+            continue
+        if line.startswith("name:"):
+            name = line.split(":", 1)[1].strip().strip('"')
+        elif line.startswith("description:"):
+            desc = line.split(":", 1)[1].strip().strip('"')
+    return name, desc
+
+
+def collect_personal_catalog(skills_dir: Path) -> list[dict]:
+    """Skills installed in ~/.claude/skills/."""
     out: list[dict] = []
+    if not skills_dir.exists():
+        return out
     for skill_dir in sorted(skills_dir.iterdir()):
         if not skill_dir.is_dir():
             continue
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.exists():
             continue
-        try:
-            text = skill_md.read_text()
-        except (OSError, UnicodeDecodeError):
-            continue
-        name = skill_dir.name
-        desc = ""
-        in_fm = False
-        for line in text.splitlines():
-            if line.strip() == "---":
-                if not in_fm:
-                    in_fm = True
-                    continue
-                break
-            if in_fm and line.startswith("description:"):
-                desc = line.split(":", 1)[1].strip().strip('"')
-        out.append({"name": name, "description": desc, "path": str(skill_dir)})
+        name, desc = _read_skill_md(skill_md)
+        if not name:
+            name = skill_dir.name
+        out.append(
+            {"name": name, "description": desc, "path": str(skill_dir), "origin": "personal"}
+        )
     return out
+
+
+def _semver_key(version: str) -> tuple:
+    """Sort key for versions like '5.1.0' or 'unknown'. Unknown sorts last."""
+    if version == "unknown":
+        return (-1,)
+    try:
+        return tuple(int(p) for p in version.split("."))
+    except ValueError:
+        return (-1,)
+
+
+def collect_plugin_catalog(plugins_cache_dir: Path) -> list[dict]:
+    """Walk ~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/ for SKILL.md files.
+
+    For each plugin, pick the highest semver version, then index every SKILL.md
+    inside that version's tree (either at the plugin root or under skills/).
+    Emits entries with a `plugin:skill` namespaced name matching the invocation form
+    seen in Claude Code session logs (e.g. `superpowers:writing-plans`).
+    """
+    out: list[dict] = []
+    if not plugins_cache_dir.exists():
+        return out
+
+    # marketplace/plugin/version path layout
+    for marketplace_dir in sorted(plugins_cache_dir.iterdir()):
+        if not marketplace_dir.is_dir():
+            continue
+        for plugin_dir in sorted(marketplace_dir.iterdir()):
+            if not plugin_dir.is_dir():
+                continue
+            versions = [v for v in plugin_dir.iterdir() if v.is_dir()]
+            if not versions:
+                continue
+            latest = max(versions, key=lambda v: _semver_key(v.name))
+            plugin_name = plugin_dir.name
+
+            # Option A: SKILL.md directly at version root
+            root_skill = latest / "SKILL.md"
+            if root_skill.exists():
+                name, desc = _read_skill_md(root_skill)
+                qualified = name if ":" in (name or "") else f"{plugin_name}:{name or plugin_name}"
+                out.append({
+                    "name": qualified,
+                    "description": desc,
+                    "path": str(latest),
+                    "origin": f"plugin:{marketplace_dir.name}/{plugin_name}@{latest.name}",
+                })
+
+            # Option B: skills/<name>/SKILL.md
+            skills_subdir = latest / "skills"
+            if skills_subdir.is_dir():
+                for sd in sorted(skills_subdir.iterdir()):
+                    if not sd.is_dir():
+                        continue
+                    s_md = sd / "SKILL.md"
+                    if not s_md.exists():
+                        continue
+                    name, desc = _read_skill_md(s_md)
+                    if not name:
+                        name = sd.name
+                    qualified = name if ":" in name else f"{plugin_name}:{name}"
+                    out.append({
+                        "name": qualified,
+                        "description": desc,
+                        "path": str(sd),
+                        "origin": f"plugin:{marketplace_dir.name}/{plugin_name}@{latest.name}",
+                    })
+    return out
+
+
+def collect_global_catalog(
+    skills_dir: Path,
+    plugins_cache_dir: Path | None = None,
+) -> list[dict]:
+    """Personal skills (~/.claude/skills/) + plugin-namespaced skills (plugin cache).
+
+    Per BRO-184: plugin skills drove ~88% of invocations in the corpus but were
+    invisible to the per-project provisioner before this change.
+    """
+    catalog = collect_personal_catalog(skills_dir)
+    if plugins_cache_dir is None:
+        plugins_cache_dir = skills_dir.parent / "plugins" / "cache"
+    catalog.extend(collect_plugin_catalog(plugins_cache_dir))
+    return catalog
 
 
 def load_project_manifest(root: Path) -> dict | None:

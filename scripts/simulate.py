@@ -28,6 +28,7 @@ from pathlib import Path
 
 # Reuse measure.py's corpus builder.
 from measure import build_corpus, CorpusRecord  # noqa: E402
+from provision import collect_global_catalog  # noqa: E402
 
 
 def load_manifest(path: Path) -> dict:
@@ -147,22 +148,32 @@ def main() -> int:
     manifest = load_manifest(Path(args.manifest))
     descriptions = scan_skill_descriptions(Path(args.skills_dir))
 
-    flat_reach = 1.0  # by definition
+    # Expanded catalog: personal + plugin (BRO-184). A "flat" mode that doesn't
+    # include plugin skills can't reach 100% of invocations — that was the
+    # artifact in BRO-180's first baseline.
+    catalog = collect_global_catalog(Path(args.skills_dir))
+    catalog_names = {c["name"] for c in catalog}
+
+    flat_reach = sum(1 for r in records if r.skill in catalog_names) / len(records) if records else 0.0
     cluster_r = cluster_reach(records, manifest)
     pp_reach = per_project_naive_reach(records, args.budget)
 
     tokens = estimate_prelude_tokens(manifest, descriptions)
 
+    # Recompute flat-mode prelude token cost from the expanded catalog
+    flat_full = sum(max(1, len(c.get("description", "")) // 4) for c in catalog)
+
     print(f"# Baseline — {len(records)} records, last {args.days} days\n")
+    print(f"Catalog: {len(catalog_names)} skills ({sum(1 for c in catalog if c.get('origin') == 'personal')} personal, {sum(1 for c in catalog if (c.get('origin') or '').startswith('plugin:'))} plugin)\n")
     print(f"Per-project budget N = {args.budget}\n")
     print("| Mode | Reach@catalog | Prelude tokens |")
     print("|---|---|---|")
-    print(f"| flat (no skill-tree) | {flat_reach:.2%} | ~{tokens['flat']:,} |")
-    print(f"| cluster (current global) | {cluster_r:.2%} | ~{tokens['cluster']:,} |")
-    print(f"| per-project naive top-{args.budget} (LOO) | {pp_reach:.2%} | ~{args.budget * (tokens['flat'] // max(1, len(descriptions))):,} (per project avg) |")
+    print(f"| flat (full catalog) | {flat_reach:.2%} | ~{flat_full:,} |")
+    print(f"| cluster (current global manifest) | {cluster_r:.2%} | ~{tokens['cluster']:,} |")
+    print(f"| per-project naive top-{args.budget} (LOO) | {pp_reach:.2%} | ~{args.budget * (flat_full // max(1, len(catalog_names))):,} (per project avg) |")
     print()
-    print("Reach@catalog = was the invoked skill present in the mode's catalog at all?")
-    print("Prelude tokens = rough chars/4 estimate of always-on prompt fragments.")
+    print("Reach@catalog = fraction of invocations whose skill was in the mode's catalog.")
+    print("Prelude tokens = chars/4 of always-on prompt fragments.")
     return 0
 
 

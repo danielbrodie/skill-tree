@@ -126,3 +126,35 @@ The right next step is **not** "polish provision.py" or "promote on demand." It'
 ## What I'd actually ship now
 
 Pull BRO-181, BRO-182, BRO-183 out of PR #8. Land BRO-179 (cleanup) and BRO-180 (measurement) only — those stand on their own. Replace the rest with a single issue: "index plugin skills in the global catalog (blocker for per-project mode)." Re-evaluate the pivot after that lands and the numbers move.
+
+## Re-run after BRO-184 (plugin-skill indexing)
+
+`provision.py`'s catalog scanner now walks `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` in addition to `~/.claude/skills/`. Catalog goes from 48 → 268 skills (48 personal + 234 plugin), and all four dominant `superpowers:*` skills are now visible to the categorizer.
+
+### Updated aggregate (`scripts/simulate.py --days 60`):
+
+| Mode | Reach@catalog | Prelude tokens |
+|---|---|---|
+| flat (full catalog) | **88.64%** | ~13,563 |
+| cluster (current global manifest) | 6.82% | ~976 |
+| per-project naive top-5 (LOO) | 74.24% | ~250 / project |
+
+Flat reach is now 88.64% (not 100%) — the remaining 11.4% are skills installed on Felix (Daniel's OpenClaw box) but not present in this machine's plugin cache. Acceptable for now; not a local-catalog problem.
+
+### Updated per-project picks
+
+With the expanded catalog, the categorizer's picks now include the `superpowers:*` skills that dominate every project's invocation history:
+
+| Project | Picks (post-184) | Invocation-weighted recall |
+|---|---|---|
+| vegasmatt-cruise-intake | `superpowers:writing-plans`, `:brainstorming`, `:subagent-driven-development`, `:finishing-a-development-branch`, `:using-git-worktrees`, `last30days:last30days`, `pp-sentry`, `pp-linear` | ~32/38 ≈ **84%** |
+| osc-record | `superpowers:writing-plans`, `:brainstorming`, `:subagent-driven-development`, `diagnose`, `pp-linear`, `session-history` | ~15/17 ≈ **88%** |
+| specimen | `superpowers:writing-plans`, `:subagent-driven-development`, `improve-codebase-architecture`, `code-craft` | ~14/14 = **100%** |
+| **Aggregate** | — | **~61/69 ≈ 88%** |
+
+Up from ~7% before. The pivot's win condition (BRO-181) is now backed by data, not just an artifact-stripped argument.
+
+### Where the remaining gap lives
+
+- 11.4% of corpus invocations (~15 records) reference skills not present in any local cache. Of those, `obsidian-vault` accounts for 7 — likely a Felix-hosted skill that the OpenClaw box surfaces but Claude Code doesn't index. Documenting; not a BRO-184 blocker.
+- The categorizer over-relies on "Daniel always uses superpowers" as a near-universal pick. That's correct per the data but worth flagging — if his workflow shifts, the categorizer needs to drop the assumption.
