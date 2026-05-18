@@ -2,7 +2,8 @@
 
 The Codex plugin format mirrors the example bundled with the Codex runtime:
     .codex-plugin/plugin.json — the manifest
-    .codex-plugin/marketplace.json — registers this plugin in a local marketplace
+    .agents/plugins/marketplace.json — registers this plugin in a local marketplace
+        (path is Codex convention; marketplace root resolves to the repo root)
     skills/<name>/SKILL.md — the actual skills (shared with other platforms)
 """
 
@@ -16,7 +17,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CODEX_PLUGIN_DIR = REPO_ROOT / ".codex-plugin"
 PLUGIN_JSON = CODEX_PLUGIN_DIR / "plugin.json"
-MARKETPLACE_JSON = CODEX_PLUGIN_DIR / "marketplace.json"
+MARKETPLACE_JSON = REPO_ROOT / ".agents" / "plugins" / "marketplace.json"
 CLAUDE_PLUGIN_JSON = REPO_ROOT / ".claude-plugin" / "plugin.json"
 
 
@@ -75,7 +76,17 @@ class TestCodexMarketplace:
         entry = next(p for p in data["plugins"] if p["name"] == "skill-tree")
         src = entry["source"]
         assert src["source"] == "local"
-        # The path is relative to the marketplace.json location
-        resolved = (CODEX_PLUGIN_DIR / src["path"]).resolve()
-        # It should point to the repo root (where .codex-plugin/plugin.json lives one level deeper)
+        # Codex convention: path is relative to the MARKETPLACE ROOT (= REPO_ROOT here),
+        # not to the marketplace.json file. Marketplace root is the dir Codex was pointed at
+        # via `codex plugin marketplace add <dir>`.
+        resolved = (REPO_ROOT / src["path"]).resolve()
+        # The plugin manifest lives at <plugin_root>/.codex-plugin/plugin.json
         assert (resolved / ".codex-plugin" / "plugin.json").exists()
+
+    def test_marketplace_policy_authentication_value(self):
+        """Codex requires authentication to be ON_INSTALL or ON_USE (not NONE).
+        Verified empirically — `codex plugin marketplace add` rejects unknown variants.
+        """
+        data = json.loads(MARKETPLACE_JSON.read_text())
+        entry = next(p for p in data["plugins"] if p["name"] == "skill-tree")
+        assert entry["policy"]["authentication"] in {"ON_INSTALL", "ON_USE"}
