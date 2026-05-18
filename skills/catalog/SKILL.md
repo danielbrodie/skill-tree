@@ -8,27 +8,35 @@ You are skill-tree's catalog skill. Your job is to take a user need and recommen
 
 ## Step 1 — read the institutional knowledge
 
-Read both docs in full:
+Read both docs:
 
 1. `${CLAUDE_PLUGIN_ROOT}/docs/ecosystem-map.md` — the global ecosystem: skill packagers, workflow plugins, installers, aggregators
 2. `${CLAUDE_PLUGIN_ROOT}/docs/registry-map.md` — where skills live on a single machine + how to install/remove per installer
 
-These two docs are the source of truth. Don't pattern-match from training data; the docs are current and the docs win.
+For now (May 2026, ~250 lines combined) read both in full. As `ecosystem-map.md` grows past ~500 lines, scan the section headers first and read only the sections that match the user's need pattern (Step 3). Don't pattern-match from training data; the docs are current and the docs win.
 
 ## Step 2 — read what the user already has
 
+Pick the project root: use the user's current working directory if they're in a project (so `<project>/.claude/skills/` shows up), or `/tmp` for a pure-global view. Pick a keyword from the user's need that will appear in skill names or descriptions (e.g., `metadata`, `stripe`, `tdd`).
+
 ```bash
-${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --list-candidates --project-root /tmp 2>/dev/null | python3 -c "
-import json, sys
+${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --list-candidates --project-root "${PROJECT_ROOT:-.}" 2>/dev/null | python3 -c "
+import json, sys, re
+keyword = sys.argv[1] if len(sys.argv) > 1 else ''
 d = json.load(sys.stdin)
-names = sorted(c['name'] for c in d['catalog'])
-print('Installed (270+ skills typically — sample):')
-print('\n'.join('  ' + n for n in names[:50]))
-print(f'  ... ({len(names)} total)')
-"
+pat = re.compile(keyword, re.IGNORECASE) if keyword else None
+matches = [c for c in d['catalog'] if not pat or pat.search(c['name']) or pat.search(c.get('description', ''))]
+print(f'Installed catalog: {len(d[\"catalog\"])} skills total')
+if keyword:
+    print(f'Matching \"{keyword}\": {len(matches)}')
+for c in sorted(matches, key=lambda x: x['name']):
+    print(f'  [{c[\"origin\"]}] {c[\"name\"]} — {c.get(\"description\", \"\")[:120]}')
+" YOUR_KEYWORD_HERE
 ```
 
-This is the user's currently-installed catalog (personal + plugin-namespaced). If they ask for something they already have, surface that fact and explain how to invoke it instead of installing again.
+Substitute `YOUR_KEYWORD_HERE` with the user's domain keyword. Omit the argument entirely to dump the whole catalog (rare — only useful for "show me everything" queries; the output is long).
+
+This is the user's currently-installed catalog (personal + plugin-namespaced + project-provisioned). If they ask for something they already have, surface that fact and explain how to invoke it instead of installing again. **When multiple installed skills match, name all of them with their differentiating purpose in one sentence each — don't pick one for the user.**
 
 ## Step 3 — parse the user's need
 
@@ -42,12 +50,15 @@ What kind of recommendation does the user want? Five common patterns:
 
 ## Step 4 — recommend, tailored to the user's agent
 
-Default assumption: the user is running Claude Code (you're inside it). If they mention Codex, Gemini CLI, Cursor, etc., adjust install commands accordingly per the installers table in `ecosystem-map.md`.
+**Detect the agent:** if `${CLAUDE_PLUGIN_ROOT}` resolves and you're invoking via the `Skill` tool, you're in Claude Code. If `${extensionPath}` resolves, you're in Gemini CLI. Otherwise check `$CODEX_HOME` or ask the user once. Default fallback: Claude Code.
+
+If the user already has a matching skill installed, **do not propose reinstalling.** Tell them the skill is already in their available-skills list, and that they can invoke it directly via the `Skill` tool with that skill's exact `name:` slug (e.g., `Skill(skill="asc-metadata-sync")` in Claude Code). Only suggest install commands for skills they don't have.
 
 For each recommendation, name:
 - **Skill / plugin** — link to the GitHub repo (or Reddit post if that's the canonical source per the ecosystem-map)
 - **What it does** — one sentence drawn from the ecosystem-map entry
-- **Install command** — the right installer for the user's agent
+- **Install command** *(only if not already installed)* — the right installer for the user's agent
+- **How to invoke** *(if already installed)* — the exact `Skill` tool call or platform-specific invocation
 - **Caveats** — any failure modes from `ecosystem-map.md` § "Recognized failure-mode signatures" that apply (e.g., "this is from vercel-labs/skills, so it'll fan out to whatever's in your lastSelectedAgents — check that first")
 
 ## Step 5 — for ambiguous needs, ask one clarifying question
