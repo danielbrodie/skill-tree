@@ -46,6 +46,24 @@ class TestRunChecks:
         errors, warnings = run_checks(manifest, skills_dir, library_dir)
         assert any("leaf-not-disabled" in e and "librarium" in e for e in errors)
 
+    def test_parity_with_check_run_all_checks(self, populated_dirs):
+        """Regression: status.run_checks used to duplicate check.run_all_checks
+        and had drifted in three places (skills_dir fallback, unclustered budget
+        counting, cluster-too-large threshold). Now delegating to the shared
+        implementation, both must produce the same partition of issues."""
+        skills_dir, library_dir, manifest_path = populated_dirs
+        from scripts.lib.manifest import load_manifest
+        from scripts.check import Severity, run_all_checks
+
+        manifest = load_manifest(manifest_path)
+        status_errors, status_warnings = run_checks(manifest, skills_dir, library_dir)
+        check_issues = run_all_checks(manifest, skills_dir, library_dir)
+
+        check_error_count = sum(1 for i in check_issues if i.severity is Severity.ERROR)
+        check_warning_count = sum(1 for i in check_issues if i.severity is Severity.WARNING)
+        assert len(status_errors) == check_error_count
+        assert len(status_warnings) == check_warning_count
+
 
 class TestDisplayStatus:
     def test_shows_token_savings(self, capsys):

@@ -34,9 +34,10 @@ def generate_openai_yaml(
     # we truncate silently rather than erroring
     truncated = short_description[:64] if len(short_description) > 64 else short_description
 
+    from .skillfile import encode_double_quoted_scalar
     return _OPENAI_YAML_TEMPLATE.format(
-        display_name=display_name.replace('"', '\\"'),
-        short_description=truncated.replace('"', '\\"'),
+        display_name=encode_double_quoted_scalar(display_name),
+        short_description=encode_double_quoted_scalar(truncated),
         allow_implicit=str(allow_implicit_invocation).lower(),
     )
 

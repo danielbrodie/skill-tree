@@ -1,37 +1,46 @@
 # skill-tree on Codex CLI
 
-This is the per-project provisioning surface for OpenAI Codex CLI, paired with the existing Claude Code, Gemini CLI, and OpenClaw surfaces. Same engine (`scripts/`), platform-specific manifest.
+skill-tree's surfaces — `provision`, `audit`, `diagnose`, `sync`, `fetch`, `check` — work on Codex CLI alongside Claude Code and Gemini CLI. The Python scripts in `scripts/` are the engine; the per-platform manifest is a thin wrapper.
 
-## Install
+## Where Codex actually looks for skills
+
+Per the official [Codex Skills docs § Where to save skills](https://developers.openai.com/codex/skills#where-to-save-skills):
+
+| Scope | Path |
+|---|---|
+| Repository | `$CWD/.agents/skills`, `$CWD/../.agents/skills`, `$REPO_ROOT/.agents/skills` |
+| User | `$HOME/.agents/skills` |
+| Admin | `/etc/codex/skills` |
+| System | Bundled with Codex by OpenAI |
+
+Note: `$HOME/.agents/skills` is the same directory the [vercel-labs/skills](https://github.com/vercel-labs/skills) CLI writes to for its multi-agent fan-out. A single `npx skills add` install is therefore readable by Codex natively.
+
+skill-tree's per-project provisioner copies into `<project>/.claude/skills/` rather than `<project>/.agents/skills/` for cross-platform consistency. If you want the project-scope set picked up by Codex specifically, point Codex at it or use one of Codex's repo-scope paths.
+
+## Installing as a Codex plugin
 
 ```bash
-# 1. Clone the repo somewhere stable
+# 1. Clone somewhere stable
 git clone https://github.com/danielbrodie/skill-tree ~/.codex/marketplaces/skill-tree
 
-# 2. Register as a Codex marketplace — point at the REPO ROOT, not .codex-plugin/
+# 2. Register as a local Codex marketplace — point at the repo root, not .codex-plugin/
 codex plugin marketplace add ~/.codex/marketplaces/skill-tree
 
-# 3. Enable the plugin in ~/.codex/config.toml
+# 3. Enable the plugin
 echo '[plugins."skill-tree@danielbrodie"]' >> ~/.codex/config.toml
 ```
 
-Codex's marketplace convention: it looks for `<root>/.agents/plugins/marketplace.json` to enumerate plugins, then for each plugin entry it looks at `<plugin-path>/.codex-plugin/plugin.json` for the actual manifest. For skill-tree, `<plugin-path>` is the repo root itself (single-plugin marketplace).
+Codex's marketplace convention: it looks for `<root>/.agents/plugins/marketplace.json` to enumerate plugins, then for each plugin entry looks at `<plugin-path>/.codex-plugin/plugin.json` for the manifest. For skill-tree, `<plugin-path>` is the repo root itself (single-plugin marketplace).
 
-After enabling, restart Codex. The bundled `skills/` directory becomes available: `provision`, `setup`, `check`, `fetch`, `audit`, `sync`, `skill-analysis`.
-
-## Differences from Claude Code
-
-| Aspect | Claude Code | Codex |
-|---|---|---|
-| Path variable in SKILL.md | `${CLAUDE_PLUGIN_ROOT}` | (TBD — use absolute paths or detect at runtime) |
-| SessionStart hooks | Yes — runs `/check --quiet --notify` | No equivalent surface yet. Run `/skill-tree:check` manually. |
-| Per-project skills location | `<project>/.claude/skills/` | Same — `<project>/.claude/skills/` (cross-CLI convention) |
-| Slash command prefix | `/skill-tree:` | `/skill-tree:` (parity) |
+After enabling, restart Codex. The bundled `skills/` directory becomes available: `provision`, `audit`, `diagnose`, `sync`, `fetch`, `check`, `setup`, `skill-analysis`.
 
 ## Known caveats
 
-1. **No SessionStart hook surface in Codex.** The "you have 5 errors in skill-tree" status nudge from Claude Code doesn't have an equivalent. Workaround: run `/skill-tree:check` after `codex` opens.
-2. **Codex marketplaces are local-path-based today.** Once Codex supports remote marketplaces (analogous to Claude Code's `plugin marketplace add <github-url>`), this install path simplifies. Until then, clone-then-register is the pattern.
+1. **No SessionStart hook surface in Codex.** The "you have N errors in skill-tree" status nudge from Claude Code doesn't have a Codex equivalent yet. Workaround: run `/skill-tree:check` manually after `codex` opens, or wire it into your shell's prompt.
+
+2. **Codex marketplaces are local-path-based today.** Once Codex supports remote marketplaces (analogous to `claude plugin marketplace add <github-url>`), the install simplifies. Until then, clone-then-register is the pattern.
+
+3. **`disable-model-invocation` has a Codex equivalent but it's separate.** Per the [Codex docs § Optional metadata](https://developers.openai.com/codex/skills#optional-metadata), `allow_implicit_invocation: false` in `agents/openai.yaml` is Codex's way of hiding a skill from automatic selection while keeping explicit `$skill` invocation. skill-tree's library uses the Claude-Code-style `disable-model-invocation: true` in SKILL.md frontmatter; Codex will not honor that field directly. For mixed setups, add an `agents/openai.yaml` next to the SKILL.md with the Codex-flavored opt-out.
 
 ## How SKILL.md commands find the scripts cross-platform
 
@@ -53,4 +62,4 @@ Or invoke the wrapper by absolute path (`/path/to/skill-tree/bin/skill-tree prov
 
 ## Status
 
-The plugin manifest exists and is validated by the test suite (`test_codex_plugin.py`). End-to-end install requires Codex to support local-path marketplaces, which the current Codex CLI does.
+The plugin manifest exists and is validated by the test suite (`tests/test_codex_plugin.py`). End-to-end install requires Codex to support local-path marketplaces, which the current Codex CLI does. I haven't end-to-end validated every skill on Codex from scratch — `provision`, `audit`, `check`, `sync` should be straightforward; `diagnose` and `fetch` may surface platform-specific quirks. Report any.

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Set up or rebuild the skill graph — scan skills, cluster them, generate routing files
+description: One-time setup or rebuild of cluster routing for OpenClaw skills — groups installed skills into 15-30 semantic clusters with visible router skills + hidden leaves so the prelude carries one router-description per cluster instead of one per skill. Useful past ~150 installed skills. USE WHEN the user explicitly wants cluster routing set up or rebuilt.
 metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 ---
 

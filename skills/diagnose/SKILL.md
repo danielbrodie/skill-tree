@@ -17,16 +17,15 @@ These two tables are the diagnostic playbook. Read both before pattern-matching 
 
 Map the user's words to a symptom family. If it doesn't fit cleanly, ask one clarifying question (Step 4) — don't guess.
 
-| Symptom family | Pattern in user's words | Likely signatures |
+| Symptom family | Pattern in user's words | Likely signatures (from `ecosystem-map.md`) |
 |---|---|---|
-| **Skill not visible** | "isn't appearing", "don't see", "shipped a new version but agents don't see it" | #4 plugin cache staleness (incl. reload-vs-update sub-finding); #6 cluster orphan; disable-model-invocation orphan |
-| **Skill invocation fails** | "skill not found", "errors when I call it", "Read fails on SKILL.md" | #5 symlink rot; registry-map #2 dead symlink |
-| **Wrong version invoked** | "doing the old behavior", "updated but running the old code" | #7 parallel registries / version skew; #4 plugin cache staleness |
-| **Skill list bloat** | "feels slow", "cluttered", "agent confused about which skill" | catalog overflow (best-practices canon); #8 dead inventory |
-| **Multi-agent fan-out wrong** | "after npx skills sync something broke", "appeared in agents I don't use", "removed an agent but skills still listed" | #1 vercel-labs fan-out to absent agents; registry-map #7 lock-file drift |
-| **Unknown registry** | "what is ~/.openclaw?", "why is there a thing in ~/.gemini/skills/?" | #2 OpenClaw dev artifact; or legitimate — check `registry-map.md` § Registries |
-| **Manifest references missing skill** | "manifest says X but I can't find it", "audit says drift" | #3 manifest-vs-filesystem drift |
-| **Cross-host residue** | "session log shows a skill not on this machine" | #9 cross-host invocation residue |
+| **Skill not visible** | "isn't appearing", "don't see", "shipped a new version but agents don't see it" | #2 plugin cache staleness, #6 disable-model-invocation orphan, #9 /reload-plugins only refreshes plugin tier |
+| **Skill invocation fails** | "skill not found", "errors when I call it", "Read fails on SKILL.md" | #4 symlink rot |
+| **Wrong version invoked** | "doing the old behavior", "updated but running the old code" | #7 parallel registries with version skew, #2 plugin cache staleness |
+| **Skill list bloat** | "feels slow", "cluttered", "agent confused about which skill" | #8 dead inventory; also progressive-disclosure recommendations in ecosystem-map.md (use `disable-model-invocation` or `skillOverrides`) |
+| **Multi-agent fan-out wrong** | "after npx skills sync something broke", "appeared in agents I don't use", "removed an agent but skills still listed" | #1 vercel-labs fan-out to absent agents |
+| **Manifest references missing skill** | "manifest says X but I can't find it", "audit says drift" | #3 manifest-vs-filesystem drift in skill-tree |
+| **Lock file vs actual install diverged** | `~/.agents/skills/X/SKILL.md` exists but `~/.claude/skills/X` is missing | #4 symlink rot OR #5 partial-fan-out scoping — check `npx skills list -g` to distinguish |
 
 ## Step 3 — run the targeted diagnostic
 

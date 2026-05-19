@@ -35,6 +35,21 @@ class TestParseFrontmatter:
         fm = parse_frontmatter(p)
         assert fm.fields["description"] == "A quoted desc"
 
+    def test_double_quoted_scalar_round_trip_with_escapes(self, tmp_path: Path):
+        """Regression: parse_frontmatter stripped outer quotes but never
+        decoded YAML escapes the generators emit. A value generated with
+        embedded quotes and backslashes round-tripped as literal backslash
+        sequences."""
+        from scripts.lib.skillfile import encode_double_quoted_scalar
+
+        original = 'Has "quotes" inside and a path C:\\Users\\me plus a\nnewline'
+        encoded = encode_double_quoted_scalar(original)
+        p = tmp_path / "SKILL.md"
+        p.write_text(f'---\nname: t\ndescription: "{encoded}"\n---\n')
+
+        fm = parse_frontmatter(p)
+        assert fm.fields["description"] == original
+
     def test_single_quoted(self, tmp_path: Path):
         p = tmp_path / "SKILL.md"
         p.write_text("---\nname: test\ndescription: 'Single quoted'\n---\n")

@@ -1,6 +1,6 @@
 ---
 name: check
-description: Check skill graph health — validation, cluster overview, and token savings
+description: Quick health check on skill-tree's manifest — finds dead references, leaf-not-in-cluster orphans, broken routing tables. Reports validation errors and (if cluster routing is set up) the token savings vs flat-catalog mode. USE WHEN the user says "check my skills", "is anything broken", or sees skill-related errors in a session.
 metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 ---
 
