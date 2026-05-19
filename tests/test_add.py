@@ -14,34 +14,37 @@ from scripts.add import main, parse_github_url
 
 class TestParseGithubUrl:
     def test_tree_url(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "https://github.com/anthropics/skills/tree/main/skills/hugging-face-paper-pages"
         )
         assert org == "anthropics"
         assert repo == "skills"
         assert skill == "hugging-face-paper-pages"
         assert ref == "main"
+        assert path == "skills/hugging-face-paper-pages"
 
     def test_blob_url(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "https://github.com/huggingface/skills/blob/main/skills/paper-search/SKILL.md"
         )
         assert org == "huggingface"
         assert repo == "skills"
         assert skill == "paper-search"
         assert ref == "main"
+        assert path == "skills/paper-search"
 
     def test_repo_root(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "https://github.com/anthropics/skills"
         )
         assert org == "anthropics"
         assert repo == "skills"
         assert skill == ""
         assert ref is None
+        assert path == ""
 
     def test_repo_root_with_git(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "https://github.com/anthropics/skills.git"
         )
         assert org == "anthropics"
@@ -49,23 +52,24 @@ class TestParseGithubUrl:
         assert skill == ""
 
     def test_shorthand(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "anthropics/skills/hugging-face-paper-pages"
         )
         assert org == "anthropics"
         assert repo == "skills"
         assert skill == "hugging-face-paper-pages"
         assert ref is None
+        assert path == "skills/hugging-face-paper-pages"
 
     def test_non_main_branch(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "https://github.com/org/repo/tree/develop/skills/my-skill"
         )
         assert ref == "develop"
         assert skill == "my-skill"
 
     def test_trailing_slash(self):
-        org, repo, skill, ref = parse_github_url(
+        org, repo, skill, ref, path = parse_github_url(
             "https://github.com/org/repo/tree/main/skills/my-skill/"
         )
         assert skill == "my-skill"
@@ -77,6 +81,29 @@ class TestParseGithubUrl:
     def test_non_github_url(self):
         with pytest.raises(ValueError):
             parse_github_url("https://gitlab.com/org/repo")
+
+    def test_nested_skills_layout_mattpocock_style(self):
+        # Regression: parser used to split on / and take [0], so
+        # 'skills/engineering/zoom-out' became 'engineering' (a category)
+        # and fetch_skill_content built a 404-ing URL.
+        org, repo, skill, ref, path = parse_github_url(
+            "https://github.com/mattpocock/skills/tree/main/skills/engineering/zoom-out"
+        )
+        assert org == "mattpocock"
+        assert repo == "skills"
+        assert skill == "zoom-out"
+        assert path == "skills/engineering/zoom-out"
+
+    def test_plugin_nested_layout_anthropic_official_marketplace(self):
+        # Regression: anthropics/claude-plugins-official uses
+        # plugins/<plugin>/skills/<skill>, which the old parser also botched.
+        org, repo, skill, ref, path = parse_github_url(
+            "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/superpowers/skills/tdd"
+        )
+        assert org == "anthropics"
+        assert repo == "claude-plugins-official"
+        assert skill == "tdd"
+        assert path == "plugins/superpowers/skills/tdd"
 
 
 class TestFetchSkillContentRef:
@@ -138,7 +165,7 @@ class TestAddManifestUpdate:
 
         monkeypatch.setattr(
             "scripts.add.fetch_skill_content",
-            lambda org, repo, skill, ref: (skill_md_content, "abc123def456"),
+            lambda org, repo, skill, ref, path_in_repo: (skill_md_content, "abc123def456"),
         )
         monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
         monkeypatch.setattr(sys, "argv", [

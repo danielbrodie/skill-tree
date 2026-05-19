@@ -79,39 +79,55 @@ if not sys.stdout.isatty():
 # ---------------------------------------------------------------------------
 
 
-def parse_github_url(url: str) -> tuple[str, str, str, str | None]:
-    """Parse a GitHub URL into (org, repo, skill_name, ref).
+def parse_github_url(url: str) -> tuple[str, str, str, str | None, str]:
+    """Parse a GitHub URL into (org, repo, skill_name, ref, path_in_repo).
 
-    Returns (org, repo, skill_name, ref) where ref is the branch/tag or None.
+    Returns (org, repo, skill_name, ref, path_in_repo). path_in_repo is the
+    full path under the repo root pointing at the skill directory (e.g.
+    `skills/engineering/zoom-out` or `plugins/superpowers/skills/tdd`). The
+    fetcher uses path_in_repo to construct the GitHub contents API call;
+    skill_name is the last path segment, used for the local install directory.
+
+    Supports real-world layouts: flat `skills/<name>`, nested
+    `skills/<category>/<name>`, and `plugins/<plugin>/skills/<name>`.
     """
-    # Full URL: https://github.com/<org>/<repo>/tree/<ref>/skills/<skill>
+    # Full URL with /tree/<ref>/<path>: capture the whole path-within-repo
     m = re.match(
-        r"https?://github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(?:skills?/)?(.+?)/?$",
+        r"https?://github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.+?)/?$",
         url,
     )
     if m:
-        skill = m.group(4).rstrip("/").split("/")[0]
-        return m.group(1), m.group(2), skill, m.group(3)
+        path_in_repo = m.group(4).rstrip("/")
+        skill = path_in_repo.split("/")[-1]
+        return m.group(1), m.group(2), skill, m.group(3), path_in_repo
 
-    # Blob URL: https://github.com/<org>/<repo>/blob/<ref>/skills/<skill>/SKILL.md
+    # Blob URL pointing at a specific SKILL.md
     m = re.match(
-        r"https?://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(?:skills?/)?([^/]+)/SKILL\.md$",
+        r"https?://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+?)/SKILL\.md$",
         url,
     )
     if m:
-        return m.group(1), m.group(2), m.group(4), m.group(3)
+        path_in_repo = m.group(4).rstrip("/")
+        skill = path_in_repo.split("/")[-1]
+        return m.group(1), m.group(2), skill, m.group(3), path_in_repo
 
     # Repo root: https://github.com/<org>/<repo>
     m = re.match(r"https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$", url)
     if m:
-        return m.group(1), m.group(2), "", None
+        return m.group(1), m.group(2), "", None, ""
 
-    # Shorthand: org/repo/skill
+    # Shorthand: org/repo/skill — assume flat layout
     m = re.match(r"^([^/]+)/([^/]+)/([^/]+)$", url)
     if m:
-        return m.group(1), m.group(2), m.group(3), None
+        return m.group(1), m.group(2), m.group(3), None, f"skills/{m.group(3)}"
 
-    raise ValueError(f"Cannot parse GitHub URL: {url}")
+    raise ValueError(
+        f"Cannot parse GitHub URL: {url}\n"
+        "  Supported formats:\n"
+        "    https://github.com/<org>/<repo>/tree/<ref>/<path-to-skill-dir>\n"
+        "    https://github.com/<org>/<repo>/blob/<ref>/<path-to-skill-dir>/SKILL.md\n"
+        "    <org>/<repo>/<skill-name>  (flat-layout shorthand)\n"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -119,13 +135,25 @@ def parse_github_url(url: str) -> tuple[str, str, str, str | None]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_skill_content(org: str, repo: str, skill_name: str, ref: str | None = None) -> tuple[str, str | None]:
+def fetch_skill_content(
+    org: str,
+    repo: str,
+    skill_name: str,
+    ref: str | None = None,
+    path_in_repo: str | None = None,
+) -> tuple[str, str | None]:
     """Fetch SKILL.md content from GitHub.
 
     Uses `gh` CLI if available, falls back to GitHub API.
     Returns (content, commit_sha).
+
+    path_in_repo: the directory under the repo root that contains SKILL.md
+    (e.g. `skills/engineering/zoom-out` or `plugins/superpowers/skills/tdd`).
+    Falls back to `skills/<skill_name>` when not provided, for backward
+    compatibility with the flat-shorthand URL form.
     """
     ref = ref or "main"
+    skill_dir_path = path_in_repo if path_in_repo else f"skills/{skill_name}"
 
     # Try gh CLI first. We pass `?ref=<ref>` on the contents API so the
     # returned content matches the requested branch/tag, not the repository
@@ -134,7 +162,7 @@ def fetch_skill_content(org: str, repo: str, skill_name: str, ref: str | None = 
     # producing a wrong-content/source-pin mismatch.
     try:
         result = subprocess.run(
-            ["gh", "api", f"repos/{org}/{repo}/contents/skills/{skill_name}/SKILL.md?ref={ref}",
+            ["gh", "api", f"repos/{org}/{repo}/contents/{skill_dir_path}/SKILL.md?ref={ref}",
              "--jq", ".content", "-H", "Accept: application/vnd.github.raw+json"],
             capture_output=True, text=True, timeout=30,
         )
@@ -152,7 +180,7 @@ def fetch_skill_content(org: str, repo: str, skill_name: str, ref: str | None = 
 
     # Fallback: try raw URL
     import urllib.request
-    raw_url = f"https://raw.githubusercontent.com/{org}/{repo}/{ref}/skills/{skill_name}/SKILL.md"
+    raw_url = f"https://raw.githubusercontent.com/{org}/{repo}/{ref}/{skill_dir_path}/SKILL.md"
     try:
         with urllib.request.urlopen(raw_url, timeout=30) as resp:
             content = resp.read().decode("utf-8")
@@ -185,7 +213,7 @@ def main() -> None:
 
     # Parse URL
     try:
-        org, repo, skill_name, ref = parse_github_url(args.url)
+        org, repo, skill_name, ref, path_in_repo = parse_github_url(args.url)
     except ValueError as e:
         print(f"{Colors.RED}Error:{Colors.RESET} {e}", file=sys.stderr)
         sys.exit(1)
@@ -211,7 +239,7 @@ def main() -> None:
     # Fetch
     print(f"Fetching {Colors.CYAN}{skill_name}{Colors.RESET} from {org}/{repo}...")
     try:
-        content, commit_sha = fetch_skill_content(org, repo, skill_name, ref)
+        content, commit_sha = fetch_skill_content(org, repo, skill_name, ref, path_in_repo)
     except Exception as e:
         print(f"{Colors.RED}Error:{Colors.RESET} {e}", file=sys.stderr)
         sys.exit(1)

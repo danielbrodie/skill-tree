@@ -21,7 +21,7 @@ For each cluster, produce:
 
 Skills that don't fit any cluster stay as standalones. That's fine — not everything clusters.
 
-**Step 3: Write the manifest.** Write the result as JSON to `~/.claude/skills-library/skill-tree/preview/manifest.json` first (as a preview), then copy to the real path after the user confirms. Use this schema:
+**Step 3: Present the proposed clustering before writing.** Output a table to the user with cluster names, member counts, and descriptions. Ask for confirmation. Only after confirmation, write the manifest directly to `~/.claude/skills-library/skill-tree/manifest.json` using this schema:
 
 ```json
 {
@@ -43,13 +43,9 @@ Skills that don't fit any cluster stay as standalones. That's fine — not every
 }
 ```
 
-If a manifest already exists, read it first and preserve `hotPath`, `referenceNodes`, `deprecated`, and any `customInstructions` on existing clusters. Only change the clustering.
+If a manifest already exists, read it first and preserve `hotPath`, `referenceNodes`, `deprecated`, and any `customInstructions` on existing clusters. Only change the clustering. Concretely: load the existing manifest, build a name→old-cluster map, and for each leaf in your new proposal, if its old cluster had a `customInstructions` field or a routing hint you'd weaken, preserve the old version.
 
-Present the proposed clusters to the user before writing. Show cluster names, member counts, and descriptions. Ask for confirmation. Then copy to the real path:
-
-```bash
-mkdir -p ~/.claude/skills-library/skill-tree && cp ~/.claude/skills-library/skill-tree/preview/manifest.json ~/.claude/skills-library/skill-tree/manifest.json
-```
+`skill-tree sync --dry-run` in Step 4 is the real preview gate — it shows exactly what routing files would change before any disk writes happen.
 
 **Step 4: Sync** — generate cluster routing files:
 

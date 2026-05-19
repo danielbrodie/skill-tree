@@ -66,12 +66,27 @@ def collect_project_signals(root: Path) -> dict:
             except (OSError, UnicodeDecodeError):
                 pass
 
-    # Detect language by file extension (light pass — top-level only)
+    # Detect language by file extension. Scan the project root plus the
+    # common source / test subdirs that real repos put code into. Without
+    # this, a Python repo without pyproject.toml / requirements.txt at the
+    # root (e.g. one driven by `uv run --with` inline deps and code in
+    # scripts/ + tests/) shows up as languages=[], which the model can't
+    # categorize. Bounded depth keeps the scan cheap.
     ext_to_lang = {".swift": "swift", ".ts": "typescript", ".tsx": "typescript",
                    ".py": "python", ".rs": "rust", ".go": "go", ".rb": "ruby"}
-    for child in root.iterdir():
-        if child.is_file() and child.suffix in ext_to_lang:
-            signals["languages"].add(ext_to_lang[child.suffix])
+    common_source_subdirs = ("scripts", "src", "lib", "tests", "test", "app", "pkg")
+    scan_roots: list[Path] = [root]
+    for sub in common_source_subdirs:
+        d = root / sub
+        if d.is_dir():
+            scan_roots.append(d)
+    for scan_root in scan_roots:
+        try:
+            for child in scan_root.iterdir():
+                if child.is_file() and child.suffix in ext_to_lang:
+                    signals["languages"].add(ext_to_lang[child.suffix])
+        except OSError:
+            continue
 
     signals["languages"] = sorted(signals["languages"])
     return signals
