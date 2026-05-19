@@ -19,16 +19,20 @@ skill-tree's per-project provisioner copies into `<project>/.claude/skills/` rat
 
 ## Installing as a Codex plugin
 
+Verified against codex-cli 0.130.0 on 2026-05-19.
+
 ```bash
 # 1. Clone somewhere stable
 git clone https://github.com/danielbrodie/skill-tree ~/.codex/marketplaces/skill-tree
 
-# 2. Register as a local Codex marketplace — point at the repo root, not .codex-plugin/
+# 2. Register as a local Codex marketplace — point at the REPO ROOT, not .codex-plugin/
 codex plugin marketplace add ~/.codex/marketplaces/skill-tree
 
-# 3. Enable the plugin
+# 3. Enable the plugin in ~/.codex/config.toml
 echo '[plugins."skill-tree@danielbrodie"]' >> ~/.codex/config.toml
 ```
+
+**There is no `codex plugin install` subcommand.** As of 0.130.0, `codex plugin` only has `marketplace add/upgrade/remove`. The `[plugins."<name>@<marketplace>"]` block in `~/.codex/config.toml` is the activation — that's what flips the plugin on.
 
 Codex's marketplace convention: it looks for `<root>/.agents/plugins/marketplace.json` to enumerate plugins, then for each plugin entry looks at `<plugin-path>/.codex-plugin/plugin.json` for the manifest. For skill-tree, `<plugin-path>` is the repo root itself (single-plugin marketplace).
 
