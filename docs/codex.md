@@ -33,9 +33,9 @@ After enabling, restart Codex. The bundled `skills/` directory becomes available
 1. **No SessionStart hook surface in Codex.** The "you have 5 errors in skill-tree" status nudge from Claude Code doesn't have an equivalent. Workaround: run `/skill-tree:check` after `codex` opens.
 2. **Codex marketplaces are local-path-based today.** Once Codex supports remote marketplaces (analogous to Claude Code's `plugin marketplace add <github-url>`), this install path simplifies. Until then, clone-then-register is the pattern.
 
-## What got fixed under
+## How SKILL.md commands find the scripts cross-platform
 
-Previously, SKILL.md files referenced `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/foo.py`. The `CLAUDE_PLUGIN_ROOT` env var is Claude Code-specific — on Codex (and Gemini CLI) it's undefined, so those commands silently failed.
+`CLAUDE_PLUGIN_ROOT` is Claude Code-specific — on Codex (and Gemini CLI) it's undefined, so SKILL.md commands that referenced `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/foo.py` silently failed elsewhere.
 
 Replaced with `${CLAUDE_PLUGIN_ROOT}/bin/skill-tree foo` — a thin bash dispatcher at the plugin root. The wrapper resolves the plugin root in this priority order:
 
