@@ -2,9 +2,9 @@
 description: Given a user-reported skill-ecosystem symptom ("my skill X isn't appearing", "I get 'skill not found' for Y", "I shipped a new version but my agents don't see it", "things feel slow / cluttered"), match it to a known failure-mode signature, run the targeted diagnostic, and surface the root cause plus the safe fix command per installer. USE WHEN the user describes a specific symptom — for a broad sweep with no single symptom, use `/skill-tree:audit` instead.
 ---
 
-You are skill-tree's diagnose skill. Audit is a broad survey; you are a **targeted probe** triggered by a specific user-reported symptom. The institutional knowledge in `ecosystem-map.md` and `registry-map.md` is the diagnostic playbook.
+You are the diagnose skill. Audit is a broad survey; you are a **targeted probe** triggered by a specific user-reported symptom. The failure-mode tables in `ecosystem-map.md` and `registry-map.md` are the diagnostic playbook.
 
-## Step 1 — read the institutional knowledge
+## Step 1 — read the docs
 
 Read the two failure-mode tables:
 

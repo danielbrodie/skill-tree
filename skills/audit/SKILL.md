@@ -2,15 +2,14 @@
 description: Survey the entire skill ecosystem on this machine — every registry, every installer's lock file, every cluster manifest — and produce a ranked list of findings with safe-action proposals. USE WHEN the user asks "audit my skills", "what's going on with my skill setup", "clean up my skill installs", or mentions confusion about where skills live.
 ---
 
-This command is skill-tree's first institutional-knowledge skill. You are the diagnostician.
+You are the audit diagnostician. Survey every skill registry on this machine, recognize failure modes, propose safe fixes.
 
-Before you start, **read these three docs**:
+Before you start, **read these two docs**:
 
 1. `${CLAUDE_PLUGIN_ROOT}/docs/registry-map.md` — every place skills can live on a machine
-2. `${CLAUDE_PLUGIN_ROOT}/docs/ecosystem-map.md` — the global ecosystem: agents, packagers, installers, conventions, failure-mode signatures
-3. `${CLAUDE_PLUGIN_ROOT}/docs/adr/0003-institutional-knowledge.md` — the design intent for this skill
+2. `${CLAUDE_PLUGIN_ROOT}/docs/ecosystem-map.md` — agent platforms, packagers, installers, frontmatter conventions, failure-mode signatures
 
-The model is the engine. Python is the eyes. Your job is to read state, recognize patterns from the docs, and propose the right action per pattern.
+Your job: read state, match patterns from those docs, propose the right action per match.
 
 ## Step 1 — survey local state
 
@@ -123,6 +122,5 @@ Record each action to the audit log when applied. Skip cleanly when declined.
 
 ## Notes
 
-- This skill assumes the model can read sibling docs and reason about them. That's the institutional-knowledge premise.
-- When you encounter a registry, packager, or installer NOT documented in `ecosystem-map.md`, note it in your output and recommend updating the doc. The institutional knowledge accumulates that way.
-- If a finding suggests a destructive action, default to the **least destructive** safe alternative. E.g., "archive the symlink, don't `rm`" when `unarchive` exists.
+- When you encounter a registry, packager, or installer that isn't in `ecosystem-map.md`, name it in your output and recommend a PR to add it. The doc only stays current that way.
+- For destructive actions, default to the least-destructive equivalent. Archive a symlink rather than `rm` it when `unarchive` exists.

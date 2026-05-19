@@ -154,7 +154,7 @@ Things I've seen consistently across Anthropic posts, community write-ups, and m
 - **Progressive disclosure beats catalog overflow.** Past ~50 skills, descriptions compete for attention. Hide via `disable-model-invocation: true`; route via cluster or `Skill` tool invocation.
 - **Per-project beats global for distinctive needs; global-popular beats per-project for the workflow base layer.** Validated against ~130 invocations of my own session corpus; numbers are in `docs/measurement.md`.
 - **Don't bundle every skill into every project.** The "iPhone skills in a JavaScript project" anti-pattern.
-- **CLAUDE.md works best short, path-scoped, and per-project** per Anthropic's best-practices post.
+- **CLAUDE.md works best short, path-scoped, and per-project.** Long monolithic CLAUDE.md files dilute the path-relevant context.
 - **Hooks tend toward one PreToolUse gate + one PostToolUse formatter.** Heavier hook setups get noisy fast.
 - **Plugin install over hand-install when both are available.** Plugin metadata + uninstall path are clean; hand-installed skills lose their provenance.
 - **`CLAUDE_CODE_SIMPLE=1`** is a useful starting point when you suspect your setup is over-customized.
