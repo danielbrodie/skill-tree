@@ -18,7 +18,7 @@ Read the JSON output. It has three top-level keys:
 
 **Step 2 — pick the skills.** Choose 5–10 skills from `catalog` that match THIS project's signals. Be opinionated. Examples of good reasoning:
 
-- iOS Swift project → `swiftui-expert-skill`, `swiftui-performance-audit`, `asc-release-flow`, `asc-xcode-build`. NOT `pp-shopify`, NOT generic web tools.
+- iOS Swift project → `swiftui-pro`, `asc-release-flow`, `asc-xcode-build`, `asc-metadata-sync`. NOT `pp-shopify`, NOT generic web tools.
 - Python CLI tool repo → `tdd`, `diagnose`, `improve-codebase-architecture`, `prototype`. Maybe `code-craft` cluster as a meta-skill.
 - Plain documentation repo → `caveman`, `write-a-skill`, maybe nothing else.
 - The user's own `~/Projects/skill-tree` (THIS repo) → `tdd`, `diagnose`, `improve-codebase-architecture`, `code-craft`, `write-a-skill`, `prototype`.
@@ -55,6 +55,6 @@ Confirm the manifest reflects what was applied. Stop.
 
 ## Notes
 
-- Copies, not symlinks: this means project-local edits won't fight upstream library changes. Drift is the tradeoff — `/skill-tree:sync` (TODO) will reconcile when ready.
+- Copies, not symlinks: this means project-local edits won't fight upstream library changes. Drift is the tradeoff — `/skill-tree:sync` reconciles when you want it.
 - This is the new default per-project behavior. The legacy global `/skill-tree:setup` still works for users who want the home-directory cluster mode.
 - If invoked from a directory with no project markers (`.git`, `.claude`, `package.json`, `pyproject.toml`, etc.), `provision.py` falls back to the current working directory. Run from the actual project root.

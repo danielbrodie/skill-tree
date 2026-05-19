@@ -127,15 +127,19 @@ def fetch_skill_content(org: str, repo: str, skill_name: str, ref: str | None = 
     """
     ref = ref or "main"
 
-    # Try gh CLI first
+    # Try gh CLI first. We pass `?ref=<ref>` on the contents API so the
+    # returned content matches the requested branch/tag, not the repository
+    # default branch. Without this, a URL pointing at `develop` fetched
+    # SKILL.md from `main` but pinned the commit SHA to `develop` —
+    # producing a wrong-content/source-pin mismatch.
     try:
         result = subprocess.run(
-            ["gh", "api", f"repos/{org}/{repo}/contents/skills/{skill_name}/SKILL.md",
+            ["gh", "api", f"repos/{org}/{repo}/contents/skills/{skill_name}/SKILL.md?ref={ref}",
              "--jq", ".content", "-H", "Accept: application/vnd.github.raw+json"],
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode == 0 and result.stdout.strip():
-            # Get commit SHA
+            # Get commit SHA for the same ref so source-pin matches content.
             sha_result = subprocess.run(
                 ["gh", "api", f"repos/{org}/{repo}/commits/{ref}",
                  "--jq", ".sha"],
@@ -296,6 +300,12 @@ def main() -> None:
             routing_hint += "."
 
         data = serialize_manifest(manifest)
+
+        # New fetched skills land in standalones by default. A future
+        # auto-clustering pass can promote them. Until then, best_cluster
+        # is None — without this init the success path raised NameError
+        # after SKILL.md was already written.
+        best_cluster: str | None = None
 
         if best_cluster and best_cluster in data["clusters"]:
             data["clusters"][best_cluster]["leaves"][skill_name] = {

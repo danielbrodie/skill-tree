@@ -178,7 +178,21 @@ def write_skillmd(path: Path, lines: list[str]) -> None:
 
 
 def set_disable_model_invocation(file_path: Path, disabled: bool = True) -> None:
-    """Set disable-model-invocation on a SKILL.md file."""
+    """Set disable-model-invocation on a SKILL.md file.
+
+    Refuses to write when the file is missing, unreadable, or not valid UTF-8.
+    parse_frontmatter folds those failures into an empty-content result; for a
+    mutating call that's wrong — without this guard, an invalid-UTF-8 SKILL.md
+    would get silently replaced with a stub containing only the new field.
+    """
+    if not file_path.exists():
+        raise FileNotFoundError(f"refusing to set disable-model-invocation: file does not exist: {file_path}")
+    try:
+        file_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        raise OSError(
+            f"refusing to set disable-model-invocation: cannot read {file_path} as UTF-8 ({e})"
+        ) from e
     fm = parse_frontmatter(file_path)
     new_lines = set_field(fm, "disable-model-invocation", str(disabled).lower())
     write_skillmd(file_path, new_lines)

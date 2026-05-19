@@ -287,9 +287,17 @@ def sha256_of_skill_md(skill_dir: Path) -> str | None:
 def apply_skills(
     root: Path, skill_names: list[str], reason: str, skills_dir: Path
 ) -> dict:
-    """Copy each named skill into the project's .claude/skills/, update manifest.
+    """Copy each named personal skill into the project's .claude/skills/, update manifest.
 
     Records each source skill's SHA256 so sync can detect drift later.
+
+    Only personal-scope skills under `skills_dir` are valid input. Plugin- and
+    bundled-skill entries from `collect_global_catalog` carry a `plugin:` or
+    `bundled:` origin and live outside `skills_dir` — those are managed by their
+    own installers (plugin marketplace, the desktop app) and don't make sense
+    to copy into a project. Passing such a name here is rejected with a clear
+    message; the previous behavior was a silent "skill not found" warning that
+    looked like a typo.
     """
     now = datetime.now(timezone.utc).isoformat()
     manifest = load_project_manifest(root) or {
@@ -305,9 +313,18 @@ def apply_skills(
 
     added: list[str] = []
     for name in skill_names:
+        if ":" in name:
+            print(
+                f"warn: skipping '{name}': plugin-namespaced skills (origin 'plugin:...') "
+                f"are managed by their plugin and can't be copied per-project. "
+                f"Use `disable-model-invocation: true` or cluster routing for progressive "
+                f"disclosure of plugin skills instead.",
+                file=sys.stderr,
+            )
+            continue
         src = skills_dir / name
         if not src.is_dir():
-            print(f"warn: skill not found in library: {name}", file=sys.stderr)
+            print(f"warn: skill not found in personal library: {name}", file=sys.stderr)
             continue
         dst = project_skills_dir / name
         if dst.exists():

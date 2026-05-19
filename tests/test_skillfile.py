@@ -145,6 +145,25 @@ class TestSetDisableModelInvocation:
         content = p.read_text()
         assert content.count("disable-model-invocation") == 1
 
+    def test_refuses_missing_file(self, tmp_path: Path):
+        # Regression: previously, calling the setter on a nonexistent path
+        # silently created an invalid stub SKILL.md instead of raising.
+        p = tmp_path / "does-not-exist.md"
+        with pytest.raises(FileNotFoundError):
+            set_disable_model_invocation(p, True)
+        assert not p.exists()
+
+    def test_refuses_and_preserves_invalid_utf8(self, tmp_path: Path):
+        # Regression: an existing SKILL.md with invalid UTF-8 used to be
+        # silently overwritten with a stub containing only the new field —
+        # data loss. The setter must refuse and leave bytes unchanged.
+        p = tmp_path / "SKILL.md"
+        original_bytes = b"\xff\xfe\x00\x01 not valid utf-8 at all"
+        p.write_bytes(original_bytes)
+        with pytest.raises(OSError):
+            set_disable_model_invocation(p, True)
+        assert p.read_bytes() == original_bytes
+
 
 class TestScanSkillsDir:
     def test_finds_skills(self, tmp_path: Path):

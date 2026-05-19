@@ -72,6 +72,15 @@ def detect_drift(project_root: Path, library: Path) -> list[DriftEntry]:
         if not source_dir.is_dir():
             out.append(DriftEntry(name, DriftState.ORPHAN, "source removed from library"))
             continue
+        # Treat a source dir without a SKILL.md as ORPHAN-equivalent — without
+        # this guard, sha256_of_skill_md returns None below, the missing-source
+        # state propagates as STALE, and apply_sync would delete the valid
+        # project copy and replace it with an empty source dir.
+        if not (source_dir / "SKILL.md").is_file():
+            out.append(
+                DriftEntry(name, DriftState.ORPHAN, "source SKILL.md missing")
+            )
+            continue
         if not project_copy_dir.is_dir():
             out.append(
                 DriftEntry(name, DriftState.MISSING_PROJECT_COPY, "project copy is gone")
