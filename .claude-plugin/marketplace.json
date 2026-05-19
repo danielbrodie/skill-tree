@@ -9,7 +9,7 @@
       "name": "skill-tree",
       "source": "./",
       "description": "Institutional-knowledge layer for the AI-skill ecosystem. Documents every agent platform, packager, installer, and failure mode — and uses the AI inside your agent to navigate them.",
-      "version": "0.6.4"
+      "version": "0.6.5"
     }
   ]
 }
