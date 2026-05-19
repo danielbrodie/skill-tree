@@ -23,59 +23,66 @@ Companion to [`registry-map.md`](./registry-map.md), which covers where skills l
 | **Kimi-CLI** | Moonshot's CLI agent | similar to Claude Code | Targeted by vercel-labs/skills fan-out. |
 | **OpenClaw** | `~/.openclaw/skills/` | SKILL.md + same-directory routers + leaves (no separate library dir) | Personal-AI runtime, often Felix-style remote-host deployment. |
 
+## Inclusion criteria
+
+A skill or plugin shows up in the tables below only if it clears at least two of:
+
+- **Cross-source presence.** Independently discussed in more than one place (e.g., GitHub + a separate blog/awesome-list, or Reddit + an Anthropic post). A single self-promotion thread is not enough.
+- **Maintainer credibility.** Author has a reputation outside this repo (Anthropic itself, Vercel Labs, Jesse Vincent, Matt Pocock, etc.) or the project has a real maintainership pattern (active commits, multiple contributors, release cadence).
+- **Curation by a third party.** Included in `anthropics/claude-plugins-official`, in a high-star community awesome-list, or covered in long-form Anthropic-adjacent writing (Simon Willison's blog, the Anthropic engineering blog, etc.).
+- **Distinctive ecosystem slot.** Fills a slot nothing else fills (enterprise on-prem registry, multi-agent install standard, canonical awesome-list).
+
+What's *not* enough on its own: I happened to install it, or it was one Reddit post in the last 30 days.
+
 ## Skill packager repos
 
-| Repo | Maintainer | Focus | Install |
+| Repo | Maintainer | Focus | Why noteworthy |
 |---|---|---|---|
-| [obra/superpowers](https://github.com/obra/superpowers) | Jesse Vincent | Methodology skills: TDD red-green-refactor, brainstorming, subagent-driven development, finishing branches, systematic debugging. | `claude plugin install superpowers@claude-plugins-official` |
-| [mattpocock/skills](https://github.com/mattpocock/skills) | Matt Pocock | Workflow skills: `to-issues`, `to-prd`, `triage`, `diagnose`, `tdd`, `improve-codebase-architecture`, `zoom-out`, `caveman`, `prototype`, `setup-matt-pocock-skills`. | `npx skills add mattpocock/skills` |
-| [vercel-labs/skills](https://github.com/vercel-labs/skills) | Vercel Labs | Both a skill repo and the multi-agent installer CLI. Skills plus a small set of web-design-specific extras. | `npx skills add ...` |
-| [rudrankriyam/asc-skills](https://github.com/rudrankriyam/asc-skills) | Rudrank Riyam | App Store Connect CLI workflow skills: ~19 `asc-*` skills covering release flow, TestFlight, screenshots, pricing, etc. | `npx skills add rudrankriyam/asc-skills` |
-| [mvanhorn/printing-press-library](https://github.com/mvanhorn/printing-press-library) | Michael VanHorn | "Printing Press" CLI generators wrapped as skills: `pp-linear`, `pp-sentry`, `pp-shopify`, `pp-granola`. Each is an API → CLI → skill pipeline. | `npx skills add mvanhorn/printing-press-library` |
-| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | Anthropic | Curated plugin directory: `superpowers`, `code-review`, `code-simplifier`, `frontend-design`, `skill-creator`, LSP plugins, more. | `claude plugin install <name>@claude-plugins-official` |
-| [dimillian/skills](https://github.com/dimillian/skills) | Thomas Ricouard | iOS/Apple-focused agent skills. | `npx skills add dimillian/skills` |
-| [charleswiltgen/axiom](https://github.com/charleswiltgen/axiom) | Charles Wiltgen | Axiom-specific developer skills. | `npx skills add charleswiltgen/axiom` |
-| [gracefullight/stock-checker](https://github.com/gracefullight/stock-checker) | gracefullight | Stock-checking skill. | `npx skills add gracefullight/stock-checker` |
-| [danielbrodie/skill-tree](https://github.com/danielbrodie/skill-tree) | Daniel Brodie | This repo. Meta: a tool for managing skills across agents. | See README. |
-| [jscraik/Agent-Skills](https://github.com/jscraik/Agent-Skills) | jscraik | Large general-purpose agent-skill collection. | Hand-install or `npx skills add jscraik/Agent-Skills` |
-| [rjmurillo/ai-agents](https://github.com/rjmurillo/ai-agents) | rjmurillo | Another large agent-skills monorepo. | `npx skills add rjmurillo/ai-agents` |
-| [nexu-io/open-design](https://github.com/nexu-io/open-design) | nexu-io | Open-source local-first alternative to Anthropic's Claude Design. Shipped within days of Claude Design's launch ([r/PromptEngineering 2026-05-13](https://www.reddit.com/r/PromptEngineering/comments/1t6ssn5/claude_design_is_cool_but_the_opensource/)). | Hand-install |
+| [obra/superpowers](https://github.com/obra/superpowers) | Jesse Vincent (Prime Radiant) | Agentic skills framework + methodology: TDD red-green-refactor, brainstorming, subagent-driven development, finishing branches, systematic debugging. Install: `claude plugin install superpowers@claude-plugins-official`. | The most-discussed third-party Claude Code skill repo in 2025–2026. Covered in [Simon Willison's blog](https://simonwillison.net/2025/Oct/10/superpowers/) and the author's own [Massively Parallel Procrastination](https://blog.fsck.com/2025/10/09/superpowers/). Listed in `claude-plugins-official`. |
+| [mattpocock/skills](https://github.com/mattpocock/skills) | Matt Pocock | "Skills for Real Engineers, straight from my .claude directory" — `to-issues`, `to-prd`, `triage`, `diagnose`, `tdd`, `improve-codebase-architecture`, `zoom-out`, `caveman`, `prototype`, `setup-matt-pocock-skills`. Install: `npx skills add mattpocock/skills`. | Author is a widely-followed TypeScript educator; the repo set the "skills for real engineers" template and is referenced by other packagers. |
+| [vercel-labs/skills](https://github.com/vercel-labs/skills) | Vercel Labs | Both a skill repo and the canonical multi-agent installer CLI (`npx skills`). Install: `npx skills add <repo>`. | The `npx skills` CLI is the de-facto multi-agent install standard — most third-party skill repos in this ecosystem document their install via `npx skills add <repo>`. |
+| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | Anthropic | Curated plugin directory: `superpowers`, `code-review`, `code-simplifier`, `frontend-design`, `skill-creator`, `claude-code-setup`, LSP plugins. Install: `claude plugin install <name>@claude-plugins-official`. | Anthropic's own curated marketplace; inclusion here is its own signal. |
+| [mvanhorn/printing-press-library](https://github.com/mvanhorn/printing-press-library) | Michael VanHorn | "Printing Press" CLI generators wrapped as skills: `pp-linear`, `pp-sentry`, `pp-shopify`, `pp-granola`, `digg-pp-cli`. Each is an API → CLI → skill pipeline. Install: `npx skills add mvanhorn/printing-press-library`. | The API-to-CLI-to-skill pipeline is a distinct pattern; the same maintainer ships `last30days-skill` which is itself a notable research-skill primitive. |
+| [rudrankriyam/asc-skills](https://github.com/rudrankriyam/asc-skills) | Rudrank Riyam | App Store Connect CLI workflow skills (~19 `asc-*` skills): release flow, TestFlight, screenshots, pricing, metadata sync. Install: `npx skills add rudrankriyam/asc-skills`. | Domain-specific (Apple ecosystem) but a clean example of a packager that ships a coherent set of skills around one CLI tool. Niche; included for the pattern. |
+| [danielbrodie/skill-tree](https://github.com/danielbrodie/skill-tree) | Daniel Brodie | This repo. Meta: a tool for managing skills already installed across agents. | Self-reference. Included so other docs that point at this map have a row to link to. |
+
+There are many more individual-developer "I built X" skill repos surfacing in monthly surveys (e.g., on r/ClaudeCode, r/ClaudeWorkflows, r/ClaudeAI). They aren't listed here unless they clear the inclusion criteria. The current `/last30days` raw output is a better source for "what shipped this month" than a permanent doc.
 
 ### Claude Code workflow plugins
 
-A category of opinionated Claude Code plugins that bundle skills + hooks + multi-agent orchestration, distinct from atomic-skill packagers above. Surfaced in the May 2026 survey.
+Opinionated bundles of skills + hooks + multi-agent orchestration, distinct from atomic-skill packagers. The inclusion bar is higher here because workflow plugins make sweeping changes to a user's setup.
 
-| Plugin | Source | Focus | Install |
+| Plugin | Source | Focus | Why noteworthy |
 |---|---|---|---|
-| Nelson | MIT, [r/ClaudeCode 2026-05-08](https://www.reddit.com/r/ClaudeCode/comments/1t7l60y/nelson_v223_shipped_and_a_benchmark_i_built/) | Multi-agent coordination using a Royal Navy metaphor (admiral/captains/ships/crew). Author ships a benchmark comparing 13 agent/harness/skill setups on a discrete-event simulation task. | See Reddit post for repo |
-| [itsribbZ/Godspeed](https://github.com/itsribbZ/Godspeed) | MIT, [r/ClaudeAI 2026-05-12](https://www.reddit.com/r/ClaudeAI/) | Plugin adding S0-S5 tier routing + multi-agent orchestration. One-command install, 17 skills bundled. | `claude plugin install godspeed@itsribbZ/Godspeed` (or repo-direct) |
-| AI Sorcery | [r/ClaudeWorkflows 2026-05-09](https://www.reddit.com/r/ClaudeWorkflows/comments/1t5w8zt/workflow_ai_sorcery_a_collection_of_claude_code/) | Claude Code skills bundle: VM sandboxing, git hooks, iterative-dev workflows. | See Reddit post |
-| OpenSwarm | [r/AISEOInsider 2026-05-12](https://www.reddit.com/r/AISEOInsider/comments/1tb7ul7/i_used_openswarm_ai_for_parallel_workflows/) | Parallel workflows across multiple AI agents. | See Reddit post |
-| Glyphh AI | [r/ClaudeCode 2026-05-11](https://www.reddit.com/r/ClaudeCode/comments/1t3zf7y/i_built_a_workspace_with_3500_mcp_apps_multimodel/) | Workspace combining MCP apps, multi-model AI, skills, automation, and dev tooling. | See Reddit post |
+| Nelson | MIT, ~300★ per author, [r/ClaudeCode 2026-05-08](https://www.reddit.com/r/ClaudeCode/comments/1t7l60y/nelson_v223_shipped_and_a_benchmark_i_built/) | Multi-agent coordination using a Royal Navy metaphor (admiral/captains/ships/crew). | Ships with the first public skill/harness benchmark — 13 agent/harness/skill setups on a discrete-event simulation task. The benchmark is the noteworthy contribution; the plugin is the demonstration vehicle. |
+| [itsribbZ/Godspeed](https://github.com/itsribbZ/Godspeed) | MIT, [r/ClaudeAI 2026-04-18](https://www.reddit.com/r/ClaudeAI/comments/1sojp0o/godspeed_opensource_plugin_that_adds_s0s5_tier/) | Plugin adding S0-S5 tier routing + multi-agent orchestration. One-command install, 17 skills bundled. | Concrete and on-GitHub with an MIT license and a real install path. Track for whether it gains independent users vs. remains author-only. |
+
+Several other Claude Code "workflow plugin" announcements in the last 30 days (AI Sorcery, OpenSwarm, Pokegents, Glyphh, multi-CLI-agent delegators) didn't clear the criteria — single-thread visibility, no third-party endorsement yet. They're real, just not noteworthy *yet*. Re-evaluate next survey.
 
 ## Installers
 
 | Installer | Scope | Strength | Removal |
 |---|---|---|---|
 | **Anthropic Claude Code plugin marketplace** (`claude plugin`) | Claude Code only | Official, curated, atomic install/uninstall. Maintains `~/.claude/plugins/installed_plugins.json`. | `claude plugin uninstall <name>@<marketplace>` |
-| **OpenAI Codex CLI plugin system** (`codex plugin`) | Codex only | Similar to Claude Code. Local marketplaces today; remote may come. | `codex plugin uninstall <name>@<marketplace>` |
+| **OpenAI Codex CLI plugin system** (`codex plugin`) | Codex only | Similar to Claude Code. Local marketplaces today. | `codex plugin uninstall <name>@<marketplace>` |
 | **Google Gemini CLI extensions** (`gemini extensions`) | Gemini only | Built-in extension manager. | `gemini extensions uninstall <name>` |
-| **vercel-labs/skills CLI** (`npx skills`) | Multi-agent fan-out | Installs one repo into N agents' skill dirs via symlinks. Lock file at `~/.agents/.skill-lock.json` tracks `skillFolderHash`. Configurable `lastSelectedAgents`. As of May 2026 the de-facto standard for multi-agent installs. | `npx skills remove <name>` |
-| **[iflytek/skillhub](https://github.com/iflytek/skillhub)** (`skillhub` CLI) | Enterprise on-premise | Self-hosted, open-source agent skill registry for enterprises. Publish & version skill packages, govern with RBAC and audit logs, deploy on-premise with Docker/Kubernetes. Fills the "Enterprise / private skill repos" gap. Built by iFlytek (Chinese AI company). `skillhub install <name> --agent codex`. | `skillhub uninstall <name>` |
-| **Verified Skill** (in-development) | Multi-platform (claimed 49) with security | Security checks + evals + package manager. Built during [Anthropic's Opus 4.7 hackathon, pushed publicly the week of 2026-05-15](https://www.reddit.com/r/ClaudeAI/comments/1srg22m/got_into_anthropics_opus_47_hackathon_pushing/). First installer with first-class security review baked in. Track for production-readiness. | TBD |
-| **`sx`** (community installer) | Multi-agent versioned config | Versioned package management for AI Skills, Hooks, and Configurations across teams and AI clients. Smaller footprint than vercel-labs but explicit team-config support ([r/ClaudeWorkflows 2026-05-15](https://www.reddit.com/r/ClaudeWorkflows/comments/1te87t5/workflow_using_sx_for_versioned_package/)). | See post |
-| **Matt Pocock bootstrap** (`/setup-matt-pocock-skills` from within an agent) | Per-repo | Scaffolds `AGENTS.md`/`CLAUDE.md` agent-skills block + `docs/agents/` so downstream skills know the repo's conventions. | Not really "uninstalled"; edit the repo's AGENTS.md directly. |
-| **skill-tree** (`/skill-tree:provision`) | Per-project | AI-categorized provisioning into `<project>/.claude/skills/`. Manifest at `.claude/.skilltree.json`. | `/skill-tree:sync --apply --prune` |
+| **vercel-labs/skills CLI** (`npx skills`) | Multi-agent fan-out | Installs one repo into N agents' skill dirs via symlinks. Lock file at `~/.agents/.skill-lock.json` tracks `skillFolderHash`. Configurable `lastSelectedAgents`. | `npx skills remove <name>` |
+| **[iflytek/skillhub](https://github.com/iflytek/skillhub)** (`@astron-team/skillhub` CLI) | Enterprise on-premise | Self-hosted open-source agent skill registry. Publish & version skill packages, govern with RBAC and audit logs, deploy on-premise with Docker/Kubernetes. Built by iFlytek. `npm install -g @astron-team/skillhub`. | `skillhub uninstall <name>` |
+| **Verified Skill** | Multi-platform with security checks | Security + evals + package manager for AI skills across multiple platforms. Built during Anthropic's Opus 4.7 hackathon — [r/ClaudeAI 2026-04-21](https://www.reddit.com/r/ClaudeAI/comments/1srg22m/got_into_anthropics_opus_47_hackathon_pushing/). | Per project |
+| **`sx`** (community installer) | Multi-agent versioned config | Versioned package management for AI Skills, Hooks, and Configurations across teams and AI clients. [r/ClaudeWorkflows 2026-05-15](https://www.reddit.com/r/ClaudeWorkflows/comments/1te87t5/workflow_using_sx_for_versioned_package/). | Per the post |
+| **anthod0/better-skills** | Per-agent CLI | CLI for Agent Skills with named profiles and versioning. Aimed at users who frequently edit skills and need to switch between collections. [r/ClaudeCode 2026-04-24](https://www.reddit.com/r/ClaudeCode/comments/1sud8xl/i_built_betterskills_a_cli_for_agent_skills_with/). | Per repo |
+| **[colbymchenry/codegraph](https://github.com/colbymchenry/codegraph)** multi-target installer | Cross-agent MCP installer | The MCP server is agent-agnostic; the installer dispatches to Claude Code, Cursor, Codex CLI, opencode, Continue, Zed. Issue [#137](https://github.com/colbymchenry/codegraph/issues/137) tracks adding new targets. | Per repo |
+| **Matt Pocock bootstrap** (`/setup-matt-pocock-skills` from within an agent) | Per-repo | Scaffolds `AGENTS.md`/`CLAUDE.md` agent-skills block + `docs/agents/` so downstream skills know the repo's conventions. | Edit `AGENTS.md` directly. |
+| **skill-tree** (`/skill-tree:provision`) | Per-project | Picks a per-project subset from skills already installed globally and copies into `<project>/.claude/skills/`. Manifest at `.claude/.skilltree.json`. | `/skill-tree:sync --apply --prune` |
 | **Hand install** (`git clone`) | Anything | Maximum flexibility. | `rm -rf <dir>` |
 
 ## Awesome-list aggregators (discovery tier)
 
-How new users find skills. Not packagers themselves — curated indexes of who's publishing what. Worth tracking because they're typically how skill-tree users will discover candidate skill repos.
+Curated indexes of who's publishing what — these are usually the highest-signal entry points for finding skills, because the curation itself does some of the noteworthy-vs-noise filtering.
 
 | Aggregator | Focus |
 |---|---|
-| [VoltAgent/awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) | General-purpose awesome-list for agent skills across platforms. |
-| [GetBindu/awesome-claude-code-and-skills](https://github.com/GetBindu/awesome-claude-code-and-skills) | Claude Code-focused curated list of skills + best practices. |
+| [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) | High-star community awesome-list of Claude Skills. Cited by community threads (e.g. [r/ClaudeCode 2026-04-22 "Best GitHub repos for Claude Code"](https://www.reddit.com/r/ClaudeCode/comments/1ssimaz/best_github_repos_for_claude_code/)) as the canonical list — PDF/Word/Excel/PPT, CSV analysis, brand-voice, Composio-backed SaaS integrations. The single best discovery tier as of May 2026. |
 
 ## Skill evaluation
 

@@ -2,7 +2,7 @@
 
 Output: JSON list of records to stdout, or a markdown summary with --report.
 
-This is the first half of BRO-180. The simulation half (recall@k under each routing
+This is the first half of . The simulation half (recall@k under each routing
 mode) lands in a follow-up once we have the corpus pinned down.
 
 Usage:

@@ -17,7 +17,7 @@ The model is the engine. Python is the eyes. Your job is to read state, recogniz
 Run each of these to get the raw inventory. Each emits JSON or text; you read all of them.
 
 ```bash
-# Personal skills + plugin-namespaced skills (the BRO-184 expanded catalog)
+# Personal skills + plugin-namespaced skills (the expanded catalog)
 ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --list-candidates --project-root /tmp 2>/dev/null
 ```
 

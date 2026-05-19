@@ -190,9 +190,9 @@ def main() -> int:
     manifest = load_manifest(Path(args.manifest))
     descriptions = scan_skill_descriptions(Path(args.skills_dir))
 
-    # Expanded catalog: personal + plugin (BRO-184). A "flat" mode that doesn't
+    # Expanded catalog: personal + plugin. A "flat" mode that doesn't
     # include plugin skills can't reach 100% of invocations — that was the
-    # artifact in BRO-180's first baseline.
+    # artifact in 's first baseline.
     catalog = collect_global_catalog(Path(args.skills_dir))
     catalog_names = {c["name"] for c in catalog}
 

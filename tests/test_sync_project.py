@@ -1,4 +1,4 @@
-"""Tests for the project-manifest sync command (BRO-187)."""
+"""Tests for the project-manifest sync command."""
 
 from __future__ import annotations
 

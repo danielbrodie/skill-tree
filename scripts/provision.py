@@ -1,4 +1,4 @@
-"""Per-project skill provisioning — the BRO-182 implementation.
+"""Per-project skill provisioning — the implementation.
 
 The shape mirrors `setup.py`'s "the model is the algorithm" pattern:
 - `--list-candidates` emits machine-readable project signals + global skill catalog
@@ -235,9 +235,9 @@ def collect_global_catalog(
     bundled_root: Path | None = None,
 ) -> list[dict]:
     """Personal skills (~/.claude/skills/) + plugin-namespaced skills (plugin cache)
-    + Anthropic-bundled skills (BRO-189 follow-up: scanner blind spot).
+    + Anthropic-bundled skills (follow-up: scanner blind spot).
 
-    Per BRO-184: plugin skills drove ~88% of invocations in the corpus but were
+    Per : plugin skills drove ~88% of invocations in the corpus but were
     invisible to the per-project provisioner before that change.
 
     The bundled scan covers Claude Code skills like `schedule`, `mcp-builder`,
@@ -289,7 +289,7 @@ def apply_skills(
 ) -> dict:
     """Copy each named skill into the project's .claude/skills/, update manifest.
 
-    Records each source skill's SHA256 (BRO-187) so sync can detect drift later.
+    Records each source skill's SHA256 so sync can detect drift later.
     """
     now = datetime.now(timezone.utc).isoformat()
     manifest = load_project_manifest(root) or {
