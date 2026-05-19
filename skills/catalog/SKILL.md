@@ -36,7 +36,7 @@ for c in sorted(matches, key=lambda x: x['name']):
 
 Substitute `YOUR_KEYWORD_HERE` with the user's domain keyword. Omit the argument entirely to dump the whole catalog (rare — only useful for "show me everything" queries; the output is long).
 
-This is the user's currently-installed catalog (personal + plugin-namespaced + project-provisioned). If they ask for something they already have, surface that fact and explain how to invoke it instead of installing again. **When multiple installed skills match, name all of them with their differentiating purpose in one sentence each — don't pick one for the user.**
+This is the user's currently-installed catalog (personal + plugin-namespaced + project-provisioned + Anthropic-bundled). Origins surface as `personal`, `plugin:<mp>/<plugin>@<ver>`, or `bundled` — the latter being Claude Code's own shipped skills like `schedule`, `mcp-builder`, `skill-creator`, etc. Note: a small handful of skills (e.g. `loop`) are compiled directly into the Claude Code binary and **won't appear in this scan** — they're still invokable via the Skill tool by name. If the user's need points at one of those, recommend it from the available-skills list rather than from the scan output. If they ask for something they already have, surface that fact and explain how to invoke it instead of installing again. **When multiple installed skills match, name all of them with their differentiating purpose in one sentence each — don't pick one for the user.**
 
 ## Step 3 — parse the user's need
 

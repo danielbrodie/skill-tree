@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from provision import (  # noqa: E402
+    collect_bundled_catalog,
     collect_plugin_catalog,
     collect_global_catalog,
     _semver_key,
@@ -114,7 +115,11 @@ class TestCollectGlobalCatalog:
             "plans",
             "Plans.",
         )
-        out = collect_global_catalog(personal, plugins_cache_dir=cache)
+        out = collect_global_catalog(
+            personal,
+            plugins_cache_dir=cache,
+            bundled_root=tmp_path / "no-bundled",
+        )
         names = {c["name"] for c in out}
         assert names == {"tdd", "superpowers:plans"}
         origins = {c["name"]: c.get("origin") for c in out}
@@ -124,6 +129,78 @@ class TestCollectGlobalCatalog:
     def test_handles_missing_plugins_cache(self, tmp_path):
         personal = tmp_path / "skills"
         _write_skill(personal / "tdd" / "SKILL.md", "tdd", "TDD.")
-        out = collect_global_catalog(personal, plugins_cache_dir=tmp_path / "missing")
+        out = collect_global_catalog(
+            personal,
+            plugins_cache_dir=tmp_path / "missing",
+            bundled_root=tmp_path / "no-bundled",
+        )
         names = {c["name"] for c in out}
         assert names == {"tdd"}
+
+    def test_includes_bundled_skills(self, tmp_path):
+        personal = tmp_path / "skills"
+        cache = tmp_path / "plugins" / "cache"
+        bundled = tmp_path / "bundled"
+        _write_skill(personal / "tdd" / "SKILL.md", "tdd", "TDD.")
+        _write_skill(
+            bundled / "sess-1" / "sub-a" / "skills" / "schedule" / "SKILL.md",
+            "schedule",
+            "Cron-style scheduler.",
+        )
+        out = collect_global_catalog(
+            personal,
+            plugins_cache_dir=cache,
+            bundled_root=bundled,
+        )
+        by_name = {c["name"]: c for c in out}
+        assert "schedule" in by_name
+        assert by_name["schedule"]["origin"] == "bundled"
+
+
+class TestCollectBundledCatalog:
+    def test_empty_when_root_missing(self, tmp_path):
+        out = collect_bundled_catalog(tmp_path / "no-such-dir")
+        assert out == []
+
+    def test_finds_skill_under_two_uuid_levels(self, tmp_path):
+        _write_skill(
+            tmp_path / "sess-1" / "sub-a" / "skills" / "schedule" / "SKILL.md",
+            "schedule",
+            "Cron-style scheduler for routines.",
+        )
+        out = collect_bundled_catalog(tmp_path)
+        assert len(out) == 1
+        assert out[0]["name"] == "schedule"
+        assert out[0]["origin"] == "bundled"
+        assert out[0]["description"] == "Cron-style scheduler for routines."
+
+    def test_dedupes_across_session_uuids(self, tmp_path):
+        _write_skill(
+            tmp_path / "sess-1" / "sub-a" / "skills" / "schedule" / "SKILL.md",
+            "schedule",
+            "First copy.",
+        )
+        _write_skill(
+            tmp_path / "sess-2" / "sub-b" / "skills" / "schedule" / "SKILL.md",
+            "schedule",
+            "Second copy (newer session, same skill).",
+        )
+        out = collect_bundled_catalog(tmp_path)
+        names = [c["name"] for c in out]
+        assert names == ["schedule"]
+
+    def test_falls_back_to_dirname_when_frontmatter_missing(self, tmp_path):
+        # SKILL.md without YAML frontmatter
+        target = tmp_path / "sess-1" / "sub-a" / "skills" / "mcp-builder" / "SKILL.md"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("no frontmatter here\n")
+        out = collect_bundled_catalog(tmp_path)
+        assert len(out) == 1
+        assert out[0]["name"] == "mcp-builder"
+
+    def test_ignores_files_not_named_skill_md(self, tmp_path):
+        target_dir = tmp_path / "sess-1" / "sub-a" / "skills" / "fake"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        (target_dir / "README.md").write_text("---\nname: fake\n---\n")
+        out = collect_bundled_catalog(tmp_path)
+        assert out == []
