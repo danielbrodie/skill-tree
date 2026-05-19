@@ -147,11 +147,9 @@ class TestClusterTooLarge:
 
 class TestCrossrefMissing:
     def test_crossref_exists(self, populated_dirs):
+        # populated_dirs now creates every cross-referenced skill from the
+        # sample manifest, so no manual patching is needed here.
         skills_dir, library_dir, manifest_path = populated_dirs
-        # Add the cross-referenced skill
-        (library_dir / "obsidian-index").mkdir(exist_ok=True)
-        (library_dir / "obsidian-index" / "SKILL.md").write_text("---\nname: obsidian-index\n---\n")
-
         manifest = load_manifest(manifest_path)
         issues = check_crossref_missing(manifest, library_dir, skills_dir)
         assert len(issues) == 0
@@ -183,13 +181,10 @@ class TestNoDescription:
 
 class TestRunAllChecks:
     def test_clean_environment(self, populated_dirs):
+        # populated_dirs now creates every cross-referenced skill from the
+        # sample manifest, so no manual patching is needed here.
         skills_dir, library_dir, manifest_path = populated_dirs
-        # Add cross-referenced skill
-        (library_dir / "obsidian-index").mkdir(exist_ok=True)
-        (library_dir / "obsidian-index" / "SKILL.md").write_text("---\nname: obsidian-index\n---\n")
-
         manifest = load_manifest(manifest_path)
         issues = run_all_checks(manifest, skills_dir, library_dir)
-        # Should be clean (no errors, maybe warnings about budget)
         errors = [i for i in issues if i.severity == Severity.ERROR]
         assert len(errors) == 0

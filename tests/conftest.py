@@ -142,6 +142,24 @@ def populated_dirs(
             f"---\nname: {name}\ndescription: deprecated\ndisable-model-invocation: true\n---\n# Dep\n",
         )
 
+    # Write every cross-referenced skill from sample_manifest so the fixture
+    # claim of 'fully populated' actually holds. Previously sample_manifest
+    # referenced obsidian-index as a cross-reference and populated_dirs never
+    # created it — tests that ran check_crossref_missing against this fixture
+    # had to patch the omission manually. Add cross-ref targets to the library
+    # (they're just reference nodes from the cluster's perspective).
+    referenced: set[str] = set()
+    for cluster in sample_manifest.clusters.values():
+        for ref in cluster.cross_references:
+            referenced.add(ref.skill)
+    for name in sorted(referenced):
+        if not (tmp_library_dir / name).exists():
+            write_skill(
+                tmp_library_dir,
+                name,
+                f"---\nname: {name}\ndescription: cross-ref target\n---\n# Ref\n",
+            )
+
     # Write manifest
     manifest_dir = tmp_library_dir / "skill-tree"
     manifest_dir.mkdir()
