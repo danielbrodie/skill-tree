@@ -19,7 +19,7 @@ Map the user's words to a symptom family. If it doesn't fit cleanly, ask one cla
 
 | Symptom family | Pattern in user's words | Likely signatures (from `ecosystem-map.md`) |
 |---|---|---|
-| **Skill not visible** | "isn't appearing", "don't see", "shipped a new version but agents don't see it" | #2 plugin cache staleness, #6 disable-model-invocation orphan, #9 /reload-plugins only refreshes plugin tier |
+| **Skill not visible** | "isn't appearing", "don't see", "shipped a new version but agents don't see it" | #2a old version dirs in cache, #2b marketplace not re-fetched (most common cause when shipping a new version), #6 disable-model-invocation orphan, #9 /reload-plugins only refreshes plugin tier |
 | **Skill invocation fails** | "skill not found", "errors when I call it", "Read fails on SKILL.md" | #4 symlink rot |
 | **Wrong version invoked** | "doing the old behavior", "updated but running the old code" | #7 parallel registries with version skew, #2 plugin cache staleness |
 | **Skill list bloat** | "feels slow", "cluttered", "agent confused about which skill" | #8 dead inventory; also progressive-disclosure recommendations in ecosystem-map.md (use `disable-model-invocation` or `skillOverrides`) |
