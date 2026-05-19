@@ -136,8 +136,8 @@ Finding: Plugin cache staleness for skill-tree
        (dead disk, the loader prefers the newest dir per installed_plugins.json)
 
   After the fix:
-    The 0.6.1 catalog skill appears in your available-skills list and is
-    invokable via Skill(skill="catalog").
+    The 0.6.1 skills appear in your available-skills list and are
+    invokable via the Skill tool by their skill-tree:<name> slug.
 ```
 
 ## Step 6 — gap report
