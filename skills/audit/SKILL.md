@@ -21,17 +21,14 @@ ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree provision --list-candidates --project-root 
 ```
 
 ```bash
-# Recent skill invocations from session history
-${CLAUDE_PLUGIN_ROOT}/bin/skill-tree measure --days 60 --report
-```
-
-```bash
 # skill-tree's own manifest health
 ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree check
 ```
 
 ```bash
-# Personal-skill archive candidates (manifest-protected ones surface here)
+# Per-skill last-invocation window + manifest-protected flag for the dead-
+# inventory signature (#8). Covers what `skill-tree measure` exposes for
+# this purpose; no need to run both.
 ${CLAUDE_PLUGIN_ROOT}/bin/skill-tree archive --list --window-days 60
 ```
 
@@ -95,30 +92,32 @@ For each finding, name:
 Example output:
 
 ```
-1. ~/.openclaw is a dev artifact, not a real install
-   File: ~/.openclaw/openclaw.json
-   Why: sourcePath references ~/Projects/skill-tree/openclaw (local dev), no
-        process running. Matches failure-mode signature #2.
-   Safe action: rm -rf ~/.openclaw
+1. Plugin cache staleness for cli-printing-press
+   Path: ~/.claude/plugins/cache/cli-printing-press/cli-printing-press/
+   Why: Two version dirs side-by-side (4.0.6 and 4.9.0). The loader uses
+        the newer; the older is dead disk. Matches failure-mode #2a.
+   Safe action: rm -rf ~/.claude/plugins/cache/cli-printing-press/cli-printing-press/4.0.6
 
-2. vercel-labs lock file fans out to 13 agents but only 3 are installed locally
+2. vercel-labs lock file fans out to agents that aren't installed
    File: ~/.agents/.skill-lock.json — lastSelectedAgents
-   Why: Each sync wastes effort syncing to ~/.cursor, ~/.amp, ~/.warp — none
-        present. Matches failure-mode signature #1.
-   Safe action: npx skills config set agents claude-code,codex,gemini-cli
-
-3. ...
+   Why: lastSelectedAgents lists an agent whose home dir doesn't exist
+        (e.g. ~/.cursor when cursor isn't installed locally). Each sync
+        wastes effort symlinking into a missing target. Matches signature #1.
+   Safe action: npx skills config  # then deselect absent agents
 ```
+
+(The agent names above are illustrative — check the user's actual
+`lastSelectedAgents` and present whichever absent agents you find.)
 
 ## Step 5 — ask the user what to do
 
 Don't auto-apply. Walk the user through findings one at a time:
 
-> Finding #1: ~/.openclaw is a dev artifact. Safe action is `rm -rf ~/.openclaw`. Apply? (y/n/skip)
+> Finding #1: cli-printing-press has two version dirs in the plugin cache. Safe action is `rm -rf .../cli-printing-press/4.0.6`. Apply? (y/n/skip)
 
 Record each action to the audit log when applied. Skip cleanly when declined.
 
-**Report-only findings are valid.** Not every finding has a clean action. Cross-host invocation residue (failure mode #9) often resolves to "user is invoking a remote skill via a bridge" — no local action needed. Surface it, explain the bridge, move on. Don't fabricate an action for the sake of having one.
+**Report-only findings are valid.** Not every finding has a clean action. Dead inventory (signature #8) often resolves to "these are intentional reserves for a workflow the user doesn't do every month" — no local action needed. Surface it, explain, move on. Don't fabricate an action for the sake of having one.
 
 ## Notes
 

@@ -83,6 +83,27 @@ class TestCollectProjectSignals:
         assert s["languages"] == []
         assert s["claudeMd"] is None
 
+    def test_detects_python_via_scripts_and_tests_subdirs(self, tmp_path):
+        # Regression: skill-tree itself is a Python project with all .py
+        # files under scripts/ and tests/, no pyproject.toml at the root
+        # (uv inline deps via PEP 723). Previously this produced
+        # languages=[] because the scanner only walked the root directory.
+        project = tmp_path / "py-repo-no-pyproject"
+        (project / "scripts").mkdir(parents=True)
+        (project / "tests").mkdir(parents=True)
+        (project / "scripts" / "main.py").write_text("print('hi')\n")
+        (project / "tests" / "test_main.py").write_text("def test_x(): pass\n")
+        s = collect_project_signals(project)
+        assert "python" in s["languages"], f"expected python in {s['languages']}"
+
+    def test_detects_swift_via_app_subdir(self, tmp_path):
+        # Common iOS layout: SwiftUI app code under `app/` or `src/`.
+        project = tmp_path / "swift-app"
+        (project / "app").mkdir(parents=True)
+        (project / "app" / "ContentView.swift").write_text("// view\n")
+        s = collect_project_signals(project)
+        assert "swift" in s["languages"]
+
 
 class TestCollectGlobalCatalog:
     def test_lists_all_skills(self, fake_skills_library, tmp_path):
