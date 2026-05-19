@@ -111,7 +111,11 @@ The model should recognize these patterns when running `/skill-tree:audit` or `/
 
 1. **vercel-labs fan-out includes agents not installed locally.** `lastSelectedAgents` in `~/.agents/.skill-lock.json` lists agents (`cursor`, `amp`, `warp`, etc.) whose directories don't exist. Each sync wastes effort on unreachable targets. Fix: trim with `npx skills config`.
 
-2. **Plugin cache staleness.** `~/.claude/plugins/cache/<plugin>/<old-version>/` and `<plugin>/<newer-version>/` both exist. The plugin loader uses the newest; the old dir is dead disk. Fix: `rm -rf` the older versions (`claude plugin gc` doesn't exist as a subcommand — verified 2026-05-19 against `claude plugin --help`).
+2. **Plugin cache staleness.** Two related sub-cases, both surface as "I shipped a new version and the available-skills list doesn't show it":
+
+   **2a. Old version dirs left in the cache.** `~/.claude/plugins/cache/<plugin>/<old-version>/` and `<plugin>/<newer-version>/` both exist. The plugin loader uses the newest; the old dir is dead disk. Fix: `rm -rf` the older versions (`claude plugin gc` doesn't exist as a subcommand — verified 2026-05-19 against `claude plugin --help`).
+
+   **2b. The marketplace was never re-fetched.** `/reload-plugins` reloads existing on-disk plugin state into the running process; it does NOT contact the marketplace to check for newer versions. If you ship a new version and the friend's cache still only has the old version dir, they ran `/reload-plugins` against state that's still old on disk. Fix: `claude plugin marketplace update <marketplace>`, then `claude plugin update <plugin>@<marketplace>`, then either `/reload-plugins` or restart. See § "Plugin cache lifecycle" below for the full lifecycle.
 
 3. **Manifest-vs-filesystem drift in skill-tree.** `~/.claude/skills-library/skill-tree/manifest.json` references a skill that's not on disk. Fix: install via the right installer, or remove the manifest reference.
 
