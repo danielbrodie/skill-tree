@@ -45,10 +45,16 @@ class TestHelp:
 
 class TestDispatch:
     def test_known_subcommand_runs(self):
-        # `list` is a simple subcommand that prints something quickly
+        # `list` is a simple subcommand. Asserting only that returncode is in
+        # {0, 2} would silently accept the wrapper's unknown-subcommand failure
+        # path (also returncode 2) — a regression where `list` stopped being
+        # recognized would still pass. Require evidence that dispatch
+        # succeeded: stderr must not contain the unknown-subcommand marker.
         r = _run(["list", "--help"], env_extra={"SKILL_TREE_ROOT": str(REPO_ROOT)})
-        # Either succeeds with --help or exits cleanly — we just want to know the
-        # script was found and executed
+        combined = (r.stdout + r.stderr).lower()
+        assert "unknown subcommand" not in combined, (
+            f"dispatch failed: {r.stderr}"
+        )
         assert r.returncode in {0, 2}, f"stderr: {r.stderr}"
 
     def test_hyphen_alias_for_underscore_script(self):

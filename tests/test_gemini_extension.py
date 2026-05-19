@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -42,17 +43,31 @@ class TestGeminiCommands:
             assert toml_path.exists(), f"Missing {cmd}.toml"
 
     def test_toml_files_have_prompt(self):
-        """Each TOML must have a prompt field (Gemini requirement)."""
+        """Each TOML must have a prompt field (Gemini requirement).
+
+        Parses the TOML rather than substring-matching: a commented-out field
+        ('# prompt = ...'), a typoed key, or syntactically invalid TOML would
+        all have satisfied the previous substring check while being unusable
+        by Gemini.
+        """
         commands_dir = REPO_ROOT / "commands"
         for cmd in self.EXPECTED_COMMANDS:
-            content = (commands_dir / f"{cmd}.toml").read_text()
-            assert "prompt" in content, f"{cmd}.toml missing prompt field"
+            with (commands_dir / f"{cmd}.toml").open("rb") as f:
+                data = tomllib.load(f)
+            assert "prompt" in data, f"{cmd}.toml missing prompt field"
+            assert isinstance(data["prompt"], str) and data["prompt"].strip(), (
+                f"{cmd}.toml prompt must be a non-empty string"
+            )
 
     def test_toml_files_have_description(self):
         commands_dir = REPO_ROOT / "commands"
         for cmd in self.EXPECTED_COMMANDS:
-            content = (commands_dir / f"{cmd}.toml").read_text()
-            assert "description" in content, f"{cmd}.toml missing description"
+            with (commands_dir / f"{cmd}.toml").open("rb") as f:
+                data = tomllib.load(f)
+            assert "description" in data, f"{cmd}.toml missing description"
+            assert isinstance(data["description"], str) and data["description"].strip(), (
+                f"{cmd}.toml description must be a non-empty string"
+            )
 
     def test_claude_skills_exist(self):
         """Each command should have a corresponding Claude Code skill."""
