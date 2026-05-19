@@ -1,6 +1,6 @@
 # The AI-skill ecosystem, mapped
 
-Living document. The model reads this when reasoning about user requests like "what skills exist for X" or "how do I install Y on Z?" Last refreshed: 2026-05-18 (post-survey + reload-vs-update finding).
+Living document. The model reads this when reasoning about user requests like "what skills exist for X" or "how do I install Y on Z?" Last refreshed: 2026-05-18 (post-survey + reload-vs-update + npx-skills-sync-doesn't-exist + partial-fan-out findings).
 
 This is companion to [`registry-map.md`](./registry-map.md) (which covers *where* skills live on a single machine). This doc covers *what* exists in the wider world.
 
@@ -116,7 +116,11 @@ The model should recognize these patterns when running `/skill-tree:audit` or `/
    ```
    Then restart Claude Code (the loader caches plugin state at process start; `/reload-plugins` post-update reloads the new cache, but the available-skills list won't refresh until restart). Common symptom: user pushes a new version, runs `/reload-plugins`, and the new skill never appears in the available-skills list — that's because the marketplace fetch never happened.
 
-5. **Symlink rot.** `~/.claude/skills/X -> ~/.agents/skills/X` but the target was removed. Fix: re-sync the installer that created the symlink, or remove the dead symlink.
+5. **Symlink rot.** `~/.claude/skills/X -> ~/.agents/skills/X` but the target was removed. Fix: re-install via `npx skills add <package> --skill X --agent claude-code -g -y`, or remove the dead symlink. Note: `~/.claude/skills/` is re-scanned each turn by the host agent (verified 2026-05-18) — no Claude Code restart needed for symlink fixes to become visible. The plugin cache (`~/.claude/plugins/cache/...`) is the registry that needs restart.
+
+   **Important: there is no `npx skills sync` command (verified 2026-05-18 against vercel-labs/skills CLI).** The available verbs are `add`, `remove`, `list`, `find`, `update`, `experimental_install` (project skills from `skills-lock.json`), and `experimental_sync` (node_modules → agent dirs). When the doc-text says "re-sync the installer," for `npx skills` that means either `npx skills update <package>` (refresh from upstream) or `npx skills add <package> --skill X --agent Y` (re-create one specific symlink). Don't tell users to run a command that doesn't exist.
+
+5a. **Partial-fan-out scoping (looks like symlink rot, isn't).** `~/.agents/skills/X/SKILL.md` exists; `~/.claude/skills/X` does not exist. This can look like #5 symlink rot, but if the entry in `~/.agents/.skill-lock.json` shows `X` was installed targeting only a specific agent list (e.g., `Antigravity` only, not `Claude Code`), then the symlink was never created — there's nothing rotted. The fix is to extend the target-agent list: `npx skills add <package> --skill X --agent claude-code -g -y`. Distinguish from #5 by checking `npx skills list -g` and seeing which agents are listed for that skill.
 
 6. **Cluster orphan.** A skill has `disable-model-invocation: true` but isn't referenced in any cluster. It's effectively invisible. Fix: add to a cluster in the manifest, or remove the flag.
 
