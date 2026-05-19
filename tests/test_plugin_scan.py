@@ -1,4 +1,4 @@
-"""Tests for the plugin-skill scanner (BRO-184)."""
+"""Tests for the plugin-skill scanner."""
 
 from __future__ import annotations
 

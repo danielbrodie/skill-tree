@@ -50,7 +50,7 @@ Before running any install command:
    pat = re.compile(keyword, re.IGNORECASE)
    for c in d['catalog']:
        if pat.search(c['name']):
-           print(f'  {c[\"origin\"]:>16}: {c[\"name\"]} -> {c[\"path\"]}')
+           print(f' {c[\"origin\"]:>16}: {c[\"name\"]} -> {c[\"path\"]}')
    " TARGET_KEYWORD
    ```
    If a skill of the same name exists, surface that and ask whether the user wants to reinstall, update, or do nothing.

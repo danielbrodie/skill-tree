@@ -1,4 +1,4 @@
-"""Tests for bin/skill-tree dispatcher (BRO-186)."""
+"""Tests for bin/skill-tree dispatcher."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Reconcile project manifest drift (BRO-187).
+"""Reconcile project manifest drift.
 
 For each skill in `<project>/.claude/.skilltree.json`, compare three hashes:
 

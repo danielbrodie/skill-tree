@@ -6,8 +6,7 @@ You are skill-tree's ecosystem-map refresh skill. `docs/ecosystem-map.md` is the
 
 ## When to run
 
-- **Monthly** is the target cadence per BRO-194.
-- **Triggered manually** when the user says any of: "refresh the ecosystem map", "monthly survey", "what's new in the skill ecosystem", "audit ecosystem-map".
+- **Monthly** is the target cadence per - **Triggered manually** when the user says any of: "refresh the ecosystem map", "monthly survey", "what's new in the skill ecosystem", "audit ecosystem-map".
 - **Auto-scheduled** via `/schedule` (see § "Automating the cadence" at the bottom).
 
 ## Step 1 — check freshness
@@ -96,7 +95,7 @@ Body:
 ```
 ## Summary
 
-Monthly ecosystem-map refresh per BRO-194. /last30days surveys turned up
+Monthly ecosystem-map refresh per /last30days surveys turned up
 N new entries to add and M already-covered hits.
 
 ## Added

@@ -64,10 +64,8 @@ Run via `uv run scripts/simulate.py --days 60`.
 ### Caveats for interpretation
 
 - **Sample size:** 132 records is small. Bootstrap CIs would widen the per-project number by ±5%. Don't make decisions on a 2% reach delta — but a 67-percentage-point gap (cluster 6.82% vs per-project 74.24%) is well outside noise.
-- **Plugin skill coverage:** cluster mode is unfairly penalised because plugin skills aren't manifest-tracked. The BRO-181 decision should either (a) include plugin skills in the manifest scan, or (b) measure cluster mode against personal-skill invocations only. Both are short follow-ups.
-- **Reach@catalog vs recall@1:** reach is necessary not sufficient. A skill being *in* the prelude doesn't mean the model picks it correctly. The recall@k upgrade requires running the model on the corpus — defer until we have signal that reach numbers don't already settle BRO-181.
-
-## Sample-size considerations
+- **Plugin skill coverage:** cluster mode is unfairly penalised because plugin skills aren't manifest-tracked. The decision should either (a) include plugin skills in the manifest scan, or (b) measure cluster mode against personal-skill invocations only. Both are short follow-ups.
+- **Reach@catalog vs recall@1:** reach is necessary not sufficient. A skill being *in* the prelude doesn't mean the model picks it correctly. The recall@k upgrade requires running the model on the corpus — defer until we have signal that reach numbers don't already settle ## Sample-size considerations
 
 The 60-day corpus has ~138 `Skill` tool invocations (per 2026-05-18 audit). Heavily Pareto-skewed: 4 superpowers skills account for ~70%. That means:
 - The corpus is small enough that recall scores have wide CIs. Report bootstrap 95% intervals, not just point estimates.
@@ -76,7 +74,7 @@ The 60-day corpus has ~138 `Skill` tool invocations (per 2026-05-18 audit). Heav
 ## Open questions
 
 - Should "wrong-skill mis-pick" be measured? Would need a manual label of "the model picked X but should have picked Y." Defer until the recall numbers tell us if it's worth the labeling effort.
-- Cross-platform: do we measure separately for Claude Code, Codex, OpenClaw? Probably yes once BRO-183 lands — the prelude assembly differs.
+- Cross-platform: do we measure separately for Claude Code, Codex, OpenClaw? Probably yes once lands — the prelude assembly differs.
 
 ## Next step
 

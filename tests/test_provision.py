@@ -1,4 +1,4 @@
-"""Tests for the per-project provisioning script (BRO-182)."""
+"""Tests for the per-project provisioning script."""
 
 from __future__ import annotations
 
@@ -166,7 +166,7 @@ class TestApplySkills:
 
 
 class TestGlobalSuggest:
-    """The --global-suggest CLI mode is the BRO-185 / ADR 0002 entry point.
+    """The --global-suggest CLI mode is the / ADR 0002 entry point.
 
     Behavior tested via subprocess so the argparse dispatch is also exercised.
     """

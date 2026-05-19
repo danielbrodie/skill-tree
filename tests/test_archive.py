@@ -1,4 +1,4 @@
-"""Tests for the unused-skill archiver (BRO-188)."""
+"""Tests for the unused-skill archiver."""
 
 from __future__ import annotations
 

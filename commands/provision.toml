@@ -1,4 +1,4 @@
-description = "Provision per-project skills (BRO-181 default mode)"
+description = "Provision per-project skills ( default mode)"
 prompt = """
 Read the skill at ${extensionPath}/skills/provision/SKILL.md and follow it exactly.
 The user's project root is the current working directory.

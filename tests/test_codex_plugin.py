@@ -1,4 +1,4 @@
-"""Validate the Codex plugin manifest (BRO-183).
+"""Validate the Codex plugin manifest.
 
 The Codex plugin format mirrors the example bundled with the Codex runtime:
     .codex-plugin/plugin.json — the manifest

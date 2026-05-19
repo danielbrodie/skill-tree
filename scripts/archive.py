@@ -1,4 +1,4 @@
-"""Auto-archive unused personal skills (BRO-188).
+"""Auto-archive unused personal skills.
 
 ADR 0002 says the global base layer should hold the top-N most-invoked skills.
 Skills with zero invocations over a configurable window are dead weight in every
