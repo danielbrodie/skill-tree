@@ -1,6 +1,6 @@
 {
   "name": "skill-tree",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "Institutional-knowledge layer for the AI-skill ecosystem. Documents every agent platform, skill packager, installer, and failure mode — and uses the AI inside Codex to navigate them.",
   "author": {
     "name": "Daniel Brodie",
