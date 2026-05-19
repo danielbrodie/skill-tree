@@ -36,8 +36,11 @@ def generate_cluster_skillmd(
     library_dir: str = "~/.claude/skills-library",
 ) -> str:
     """Generate the full SKILL.md content for a cluster router."""
-    # Escape double quotes in description for frontmatter
-    escaped_desc = cluster.description.replace('"', '\\"')
+    # YAML-safe escape of all sequences `parse_frontmatter` knows how to
+    # decode (\\, \", \n, \t, \r). Previously this only handled `"` which
+    # made backslashes and newlines round-trip incorrectly.
+    from .skillfile import encode_double_quoted_scalar
+    escaped_desc = encode_double_quoted_scalar(cluster.description)
 
     parts: list[str] = []
 

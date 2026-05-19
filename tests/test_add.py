@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import sys
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
-from scripts.add import parse_github_url
+from scripts.add import main, parse_github_url
 
 
 class TestParseGithubUrl:
@@ -72,3 +77,80 @@ class TestParseGithubUrl:
     def test_non_github_url(self):
         with pytest.raises(ValueError):
             parse_github_url("https://gitlab.com/org/repo")
+
+
+class TestFetchSkillContentRef:
+    """Regression: when gh is on PATH, the contents API call previously did
+    not pass `?ref=<ref>`, so requesting `ref='develop'` silently fetched the
+    default branch — wrong content with the correct ref's commit SHA pinned."""
+
+    def test_gh_path_passes_ref_to_contents_api(self, monkeypatch):
+        from scripts import add
+
+        calls = []
+
+        class FakeCompleted:
+            def __init__(self, returncode, stdout):
+                self.returncode = returncode
+                self.stdout = stdout
+
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            if "contents/" in cmd[2]:
+                return FakeCompleted(0, "SKILL.md body bytes\n")
+            if "commits/" in cmd[2]:
+                return FakeCompleted(0, "deadbeefcafebabe\n")
+            return FakeCompleted(1, "")
+
+        monkeypatch.setattr(add.subprocess, "run", fake_run)
+        content, sha = add.fetch_skill_content("org", "repo", "my-skill", "develop")
+        assert content.startswith("SKILL.md body")
+        assert sha == "deadbeefcafebabe"
+        # The contents API request MUST carry ?ref=develop.
+        contents_call = next(c for c in calls if "contents/" in c[2])
+        assert "?ref=develop" in contents_call[2]
+        # And the commits-API call must use the same ref so source-pin matches.
+        commits_call = next(c for c in calls if "commits/" in c[2])
+        assert commits_call[2].endswith("/commits/develop")
+
+
+class TestAddManifestUpdate:
+    """Regression: the success path with an existing manifest used to raise
+    NameError because best_cluster was referenced but never assigned, leaving
+    a partially-added skill (SKILL.md written, manifest not updated)."""
+
+    def test_success_path_with_existing_manifest_adds_to_standalones(self, tmp_path, monkeypatch, capsys):
+        library_dir = tmp_path / "library"
+        library_dir.mkdir()
+        manifest_path = library_dir / "skill-tree" / "manifest.json"
+        manifest_path.parent.mkdir(parents=True)
+        manifest_path.write_text(json.dumps({
+            "version": "1.0",
+            "unclusteredBudget": 25,
+            "clusters": {},
+            "standalones": [],
+            "hotPath": [],
+            "referenceNodes": [],
+            "deprecated": [],
+        }))
+
+        skill_md_content = "---\nname: my-skill\ndescription: A test skill.\n---\n\nBody.\n"
+
+        monkeypatch.setattr(
+            "scripts.add.fetch_skill_content",
+            lambda org, repo, skill, ref: (skill_md_content, "abc123def456"),
+        )
+        monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+        monkeypatch.setattr(sys, "argv", [
+            "skill-tree",
+            "anthropics/skills/my-skill",
+            "--library-dir", str(library_dir),
+        ])
+
+        # Used to raise NameError before this regression test was added.
+        main()
+
+        manifest = json.loads(manifest_path.read_text())
+        assert "my-skill" in manifest["standalones"]
+        assert (library_dir / "my-skill" / "SKILL.md").exists()
+        assert manifest["_sources"]["my-skill"]["sourceCommit"] == "abc123def456"

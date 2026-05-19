@@ -61,8 +61,11 @@ if not sys.stdout.isatty():
 
 
 # ---------------------------------------------------------------------------
-# Validation (inlined from check.py)
+# Validation (delegates to check.run_all_checks to avoid drift)
 # ---------------------------------------------------------------------------
+
+
+from check import Severity, run_all_checks  # noqa: E402
 
 
 def run_checks(
@@ -70,76 +73,27 @@ def run_checks(
     skills_dir: Path,
     library_dir: Path,
 ) -> tuple[list[str], list[str]]:
-    """Run all validation checks. Returns (errors, warnings)."""
+    """Run all validation checks. Returns (errors, warnings).
+
+    Delegates to `check.run_all_checks` and formats its Issue objects into the
+    flat (errors, warnings) tuple this script's display layer expects. Sharing
+    the implementation keeps `/skill-tree:check` and `/skill-tree:status` from
+    returning different verdicts on the same graph — the previous inline copy
+    had drifted in three places: dead-reference checks ignored the skills_dir
+    fallback, unclustered-budget used manifest counts instead of scanning
+    visible skills, and cluster-too-large warned at >15 instead of >20.
+    """
+    issues = run_all_checks(manifest, skills_dir, library_dir)
     errors: list[str] = []
     warnings: list[str] = []
-    managed = all_managed_skills(manifest)
-
-    # dead-reference
-    for cluster in manifest.clusters.values():
-        for leaf_name in cluster.leaves:
-            path = library_dir / leaf_name / "SKILL.md"
-            if not path.exists():
-                errors.append(f"dead-reference: {leaf_name} in cluster {cluster.name}")
-
-    # uniqueness-violation
-    for name, locs in managed.items():
-        if len(locs) > 1 and not (len(locs) == 2 and "clusters (router)" in locs):
-            errors.append(f"uniqueness-violation: {name} in {', '.join(locs)}")
-
-    # leaf-not-disabled
-    for cluster in manifest.clusters.values():
-        for leaf_name in cluster.leaves:
-            path = library_dir / leaf_name / "SKILL.md"
-            if path.exists():
-                fm = parse_frontmatter(path)
-                if not is_disabled(fm):
-                    errors.append(f"leaf-not-disabled: {leaf_name}")
-
-    # always-on-leaf
-    for cluster in manifest.clusters.values():
-        for leaf_name in cluster.leaves:
-            path = library_dir / leaf_name / "SKILL.md"
-            if path.exists():
-                fm = parse_frontmatter(path)
-                if has_always_true(fm):
-                    errors.append(f"always-on-leaf: {leaf_name}")
-
-    # orphaned-disabled
-    library_skills = scan_skills_dir(library_dir)
-    for name, path in library_skills.items():
-        fm = parse_frontmatter(path)
-        if is_disabled(fm) and name not in managed:
-            warnings.append(f"orphaned-disabled: {name}")
-
-    # unclustered-over-budget
-    visible = len(manifest.clusters) + len(manifest.standalones) + len(manifest.hot_path)
-    if visible > manifest.unclustered_budget:
-        warnings.append(f"unclustered-over-budget: {visible} visible (budget: {manifest.unclustered_budget})")
-
-    # cluster-too-large
-    for cluster in manifest.clusters.values():
-        if len(cluster.leaves) > 15:
-            warnings.append(f"cluster-too-large: {cluster.name} ({len(cluster.leaves)} leaves)")
-
-    # crossref-missing
-    for cluster in manifest.clusters.values():
-        for ref in cluster.cross_references:
-            ref_path = library_dir / ref.skill / "SKILL.md"
-            scan_path = skills_dir / ref.skill / "SKILL.md"
-            if not ref_path.exists() and not scan_path.exists():
-                warnings.append(f"crossref-missing: {ref.skill} in {cluster.name}")
-
-    # no-description
-    for cluster in manifest.clusters.values():
-        for leaf_name, leaf in cluster.leaves.items():
-            if not leaf.routing_hint:
-                path = library_dir / leaf_name / "SKILL.md"
-                if path.exists():
-                    fm = parse_frontmatter(path)
-                    if not get_description(fm):
-                        warnings.append(f"no-description: {leaf_name}")
-
+    for issue in issues:
+        line = f"{issue.check}: {issue.message}" if issue.message else issue.check
+        if issue.skill and issue.skill not in line:
+            line = f"{issue.check}: {issue.skill}"
+        if issue.severity is Severity.ERROR:
+            errors.append(line)
+        else:
+            warnings.append(line)
     return errors, warnings
 
 

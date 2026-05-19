@@ -1,6 +1,6 @@
 ---
 name: fetch
-description: Fetch a skill from GitHub and wire it into the skill graph
+description: Download a SKILL.md from a GitHub URL into the user's OpenClaw skill library with security checks (prompt injection, zero-width unicode, path traversal). The fetched skill is sandboxed via `disable-model-invocation: true` so it can't auto-fire until explicitly enabled. USE WHEN the user hands you a GitHub URL pointing at a SKILL.md and wants it pulled in safely.
 metadata: { "openclaw": { "emoji": "🌳", "requires": { "bins": ["uv"] } } }
 ---
 

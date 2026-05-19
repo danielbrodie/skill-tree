@@ -62,17 +62,17 @@ print(f'Claude Code plugins: {len(d.get(\"plugins\", {}))} installed')
 
 ## Step 2 — pattern-match against known failure-mode signatures
 
-Walk through the failure modes from `docs/ecosystem-map.md` § "Recognized failure-mode signatures" and check each one against the inventory:
+Walk through the nine numbered signatures in `docs/ecosystem-map.md` § "Recognized failure-mode signatures" and check each one against the inventory above. The numbers here match the doc exactly — cite them by number in your output so users can look up the full description.
 
 1. **vercel-labs fan-out targets agents that aren't installed.** Check `lastSelectedAgents` against actual dir presence (`~/.cursor`, `~/.amp`, `~/.warp`, etc.).
-2. **OpenClaw dev artifact.** Check `~/.openclaw/openclaw.json` for `sourcePath` pointing at a dev repo + no running process.
-3. **Manifest-vs-filesystem drift.** From `/skill-tree:check` output: any skill in the manifest but missing from `~/.claude/skills/`?
-4. **Plugin cache staleness.** Walk `~/.claude/plugins/cache/<plugin>/`; if multiple version dirs exist, the older ones are likely dead.
-5. **Symlink rot.** Find `~/.claude/skills/*` symlinks pointing at missing targets.
-6. **Cluster orphan.** Skills with `disable-model-invocation: true` not in any cluster (already flagged by `/skill-tree:check`).
-7. **Parallel registries with version skew.** Same skill name in `~/.agents/skills/` and `~/.claude/plugins/cache/`. The user might invoke either.
+2. **Plugin cache staleness.** Walk `~/.claude/plugins/cache/<plugin>/`; if multiple version dirs exist, the older ones are likely dead.
+3. **Manifest-vs-filesystem drift in skill-tree.** From `/skill-tree:check` output: any skill in the manifest but missing from disk?
+4. **Symlink rot.** Find `~/.claude/skills/*` symlinks pointing at missing targets.
+5. **Partial-fan-out scoping.** `~/.agents/skills/X/SKILL.md` exists, `~/.claude/skills/X` doesn't — but `npx skills list -g` shows X was scoped to a non-Claude-Code agent. (Distinct from #4 — see ecosystem-map.md.)
+6. **`disable-model-invocation: true` orphan.** Hidden via frontmatter, not routed in any cluster, effectively invisible. (Already flagged by `/skill-tree:check`.)
+7. **Parallel registries with version skew.** Same skill name in `~/.agents/skills/` and `~/.claude/plugins/cache/`. The model resolves whichever it finds first.
 8. **Dead inventory.** Skills with zero invocations over the window (already flagged by `/skill-tree:archive --list`).
-9. **Cross-host residue.** Skills invoked per the session corpus that don't appear in any local registry.
+9. **`/reload-plugins` only refreshes the plugin tier.** After running it, Desktop-provided skills disappear from the available-skills list until restart.
 
 ## Step 3 — rank the findings
 

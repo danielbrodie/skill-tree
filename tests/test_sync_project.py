@@ -74,6 +74,25 @@ class TestDetectDrift:
         drift = detect_drift(project, library)
         assert _state_for(drift, "alpha") is DriftState.MISSING_PROJECT_COPY
 
+    def test_orphan_when_source_dir_exists_but_skill_md_missing(self, project, library):
+        # Regression: previously the missing-SKILL.md case classified as STALE,
+        # which apply_sync then handled by deleting the valid project copy and
+        # replacing it with the empty source dir — data loss.
+        (library / "alpha" / "SKILL.md").unlink()
+        drift = detect_drift(project, library)
+        assert _state_for(drift, "alpha") is DriftState.ORPHAN
+
+    def test_apply_sync_preserves_project_copy_when_source_skill_md_missing(self, project, library):
+        # Same regression as above, exercised through apply_sync without --prune.
+        (library / "alpha" / "SKILL.md").unlink()
+        original = (project / ".claude" / "skills" / "alpha" / "SKILL.md").read_text()
+        result = apply_sync(project, library)  # no prune
+        # Project copy must still be intact and unmodified.
+        still_there = (project / ".claude" / "skills" / "alpha" / "SKILL.md").read_text()
+        assert still_there == original
+        assert "alpha" not in result["re-copied"]
+        assert "alpha" not in result["pruned"]
+
 
 class TestApplySync:
     def test_re_copies_stale(self, project, library):

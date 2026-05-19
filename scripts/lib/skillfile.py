@@ -24,6 +24,49 @@ class SkillFrontmatter:
 
 
 # ---------------------------------------------------------------------------
+# YAML-safe double-quoted scalar codec
+# ---------------------------------------------------------------------------
+
+
+def encode_double_quoted_scalar(value: str) -> str:
+    """Escape a string for use inside a YAML double-quoted scalar.
+
+    Escapes backslash first (so we don't double-escape our own output),
+    then double quotes, then control characters that YAML requires as
+    escape sequences. Returns the content WITHOUT the surrounding quotes —
+    the caller wraps in `"..."`. Round-trips with `_decode_double_quoted_scalar`.
+    """
+    out = value.replace("\\", "\\\\").replace('"', '\\"')
+    out = out.replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r")
+    return out
+
+
+def _decode_double_quoted_scalar(value: str) -> str:
+    """Inverse of `encode_double_quoted_scalar` for the same escape set."""
+    out: list[str] = []
+    i = 0
+    while i < len(value):
+        c = value[i]
+        if c == "\\" and i + 1 < len(value):
+            nxt = value[i + 1]
+            if nxt == "n":
+                out.append("\n")
+            elif nxt == "t":
+                out.append("\t")
+            elif nxt == "r":
+                out.append("\r")
+            elif nxt in ('"', "\\"):
+                out.append(nxt)
+            else:
+                out.append(nxt)
+            i += 2
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+# ---------------------------------------------------------------------------
 # Parsing
 # ---------------------------------------------------------------------------
 
@@ -88,11 +131,15 @@ def parse_frontmatter(file_path: Path) -> SkillFrontmatter:
             i += 1 + len(continuation)
             continue
 
-        # Strip surrounding quotes
-        if len(value) >= 2 and (
-            (value[0] == '"' and value[-1] == '"')
-            or (value[0] == "'" and value[-1] == "'")
-        ):
+        # Strip surrounding quotes and decode escapes if double-quoted.
+        # parse_frontmatter previously stripped quotes but never decoded the
+        # YAML escapes the generators emit (\\, \", \n, \t). That meant a
+        # value generated with embedded quotes or backslashes round-tripped
+        # as literal backslash sequences. _decode_double_quoted_scalar fixes
+        # the asymmetry.
+        if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+            value = _decode_double_quoted_scalar(value[1:-1])
+        elif len(value) >= 2 and value[0] == "'" and value[-1] == "'":
             value = value[1:-1]
 
         fields[key] = value
@@ -178,7 +225,21 @@ def write_skillmd(path: Path, lines: list[str]) -> None:
 
 
 def set_disable_model_invocation(file_path: Path, disabled: bool = True) -> None:
-    """Set disable-model-invocation on a SKILL.md file."""
+    """Set disable-model-invocation on a SKILL.md file.
+
+    Refuses to write when the file is missing, unreadable, or not valid UTF-8.
+    parse_frontmatter folds those failures into an empty-content result; for a
+    mutating call that's wrong — without this guard, an invalid-UTF-8 SKILL.md
+    would get silently replaced with a stub containing only the new field.
+    """
+    if not file_path.exists():
+        raise FileNotFoundError(f"refusing to set disable-model-invocation: file does not exist: {file_path}")
+    try:
+        file_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        raise OSError(
+            f"refusing to set disable-model-invocation: cannot read {file_path} as UTF-8 ({e})"
+        ) from e
     fm = parse_frontmatter(file_path)
     new_lines = set_field(fm, "disable-model-invocation", str(disabled).lower())
     write_skillmd(file_path, new_lines)

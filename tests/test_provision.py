@@ -141,6 +141,28 @@ class TestApplySkills:
         captured = capsys.readouterr()
         assert "nonexistent" in captured.err
 
+    def test_rejects_plugin_namespaced_skill_with_clear_message(
+        self, fake_project, fake_skills_library, capsys
+    ):
+        # Regression: --list-candidates advertises plugin:skill entries via
+        # collect_plugin_catalog, but --apply resolves names against the
+        # personal skills_dir only. Previously, passing a plugin:skill name
+        # produced a "skill not found in library" warning that looked like a
+        # typo. Now it must produce a clear message explaining why plugin
+        # skills can't be provisioned per-project.
+        result = apply_skills(
+            fake_project,
+            ["tdd", "superpowers:writing-plans"],
+            "test",
+            fake_skills_library,
+        )
+        assert result["added"] == ["tdd"]
+        captured = capsys.readouterr()
+        # The message must call out the plugin-namespaced shape explicitly,
+        # not just "skill not found".
+        assert "superpowers:writing-plans" in captured.err
+        assert "plugin" in captured.err.lower()
+
     def test_replaces_existing_copy_on_reapply(
         self, fake_project, fake_skills_library
     ):
