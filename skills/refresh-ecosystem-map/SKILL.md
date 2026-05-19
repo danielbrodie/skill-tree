@@ -2,11 +2,12 @@
 description: Monthly process for keeping docs/ecosystem-map.md current. Runs the canonical survey query against /last30days, cross-references results with existing entries, drafts additions for new agent platforms / skill packagers / installers / workflow plugins / failure modes, and opens a PR. USE WHEN the user says "refresh the ecosystem map", "monthly survey", "what's new in skills since last month", or it has been ~30 days since the last refresh.
 ---
 
-You are skill-tree's ecosystem-map refresh skill. `docs/ecosystem-map.md` is the institutional knowledge consumed by every other institutional-knowledge skill (audit, catalog, diagnose, install). If it drifts, every downstream recommendation drifts with it. Your job is to keep it within ~30 days of reality.
+You are the ecosystem-map refresh skill. `docs/ecosystem-map.md` is read at runtime by audit, catalog, diagnose, and install. If it drifts, downstream recommendations drift with it. Your job is to keep it within ~30 days of reality.
 
 ## When to run
 
-- **Monthly** is the target cadence per - **Triggered manually** when the user says any of: "refresh the ecosystem map", "monthly survey", "what's new in the skill ecosystem", "audit ecosystem-map".
+- **Monthly** is the target cadence.
+- **Triggered manually** when the user says any of: "refresh the ecosystem map", "monthly survey", "what's new in the skill ecosystem", "audit ecosystem-map".
 - **Auto-scheduled** via `/schedule` (see § "Automating the cadence" at the bottom).
 
 ## Step 1 — check freshness

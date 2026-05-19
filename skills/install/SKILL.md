@@ -1,10 +1,10 @@
 ---
-description: Given a skill or plugin reference (name@marketplace, GitHub URL, user/repo shorthand, bare name, or Reddit/blog URL for workflow plugins), pick the right installer per skill-tree's institutional knowledge and run it. Handles Claude Code plugin marketplace, Codex plugin marketplace, Gemini CLI extensions, vercel-labs/skills CLI, and hand-install. USE WHEN the user says "install X", "add the X skill", "set up <plugin>", or hands you a GitHub repo URL and wants it installed.
+description: Given a skill or plugin reference (name@marketplace, GitHub URL, user/repo shorthand, bare name, or Reddit/blog URL for workflow plugins), look up `docs/ecosystem-map.md` for the right installer and run it. Handles Claude Code plugin marketplace, Codex plugin marketplace, Gemini CLI extensions, vercel-labs/skills CLI, and hand-install. USE WHEN the user says "install X", "add the X skill", "set up <plugin>", or hands you a GitHub repo URL and wants it installed.
 ---
 
-You are skill-tree's install skill. You're a **cross-installer dispatcher.** Given a reference, pick the right installer per `ecosystem-map.md` § "Installers" and run it.
+You are the install skill — a **cross-installer dispatcher.** Given a reference, pick the right installer per `ecosystem-map.md` § "Installers" and run it.
 
-## Step 1 — read the institutional knowledge
+## Step 1 — read the docs
 
 Read the relevant sections of:
 
@@ -147,7 +147,7 @@ Don't write to the skill-tree manifest for installs that didn't go through `/ski
 
 ## Step 9 — gap report
 
-If the ref doesn't match anything in the institutional knowledge AND inspecting the repo doesn't reveal a known shape (no `.claude-plugin/`, no `gemini-extension.json`, no `skills/` dir), say so plainly:
+If the ref doesn't match anything in `ecosystem-map.md` AND inspecting the repo doesn't reveal a known shape (no `.claude-plugin/`, no `gemini-extension.json`, no `skills/` dir), say so plainly:
 
 > "Couldn't dispatch this ref. The repo doesn't match any documented packager pattern and ecosystem-map.md doesn't list it. Options: (a) hand-install with `git clone`, (b) ask the maintainer for the canonical install command, (c) PR it to `ecosystem-map.md` once you've worked out the right install path."
 

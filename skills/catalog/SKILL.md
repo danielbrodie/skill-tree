@@ -1,12 +1,12 @@
 ---
-description: Given a user need ("I want a skill for Stripe webhooks", "anything for SwiftUI animations?", "help me find Sentry tooling"), search skill-tree's institutional knowledge and recommend skills with install commands tailored to the user's agent. USE WHEN the user is looking for a skill they don't already have, asks "is there a skill for X", "what skill should I install", or "find me something for Y".
+description: Given a user need ("I want a skill for Stripe webhooks", "anything for SwiftUI animations?", "help me find Sentry tooling"), look up `docs/ecosystem-map.md` and the user's installed-skill catalog, then recommend matching skills with install commands tailored to their agent. USE WHEN the user is looking for a skill they don't already have, asks "is there a skill for X", "what skill should I install", or "find me something for Y".
 ---
 
-You are skill-tree's catalog skill. Your job is to take a user need and recommend the right skill(s) from the documented ecosystem, with install commands tailored to whichever agent the user runs.
+You are the catalog skill. Take a user need, look up the documented ecosystem, recommend matching skills with install commands tailored to whichever agent the user runs.
 
-**The institutional knowledge IS the catalog.** You don't search the web from scratch — you read what skill-tree already knows.
+The recommendation comes from `docs/ecosystem-map.md` plus the user's currently-installed catalog — not from a fresh web search.
 
-## Step 1 — read the institutional knowledge
+## Step 1 — read the docs
 
 Read both docs:
 
