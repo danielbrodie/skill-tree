@@ -40,12 +40,14 @@ gemini extensions install https://github.com/danielbrodie/skill-tree
 
 **Codex CLI**
 ```
+# Clone somewhere stable, then register the repo root as a local marketplace
 git clone https://github.com/danielbrodie/skill-tree ~/.codex/marketplaces/skill-tree
-codex plugin marketplace add ~/.codex/marketplaces/skill-tree/.codex-plugin
-codex plugin install skill-tree@danielbrodie
+codex plugin marketplace add ~/.codex/marketplaces/skill-tree
+# Enable the plugin in ~/.codex/config.toml
+echo '[plugins."skill-tree@danielbrodie"]' >> ~/.codex/config.toml
 ```
 
-See `docs/codex.md` for Codex caveats (no SessionStart hook surface, `${CLAUDE_PLUGIN_ROOT}` is Claude-specific).
+Verified against codex-cli 0.130.0. Codex doesn't have a `plugin install` subcommand — registering the marketplace plus the `[plugins."..."]` block in `config.toml` is the activation. See `docs/codex.md` for caveats (no SessionStart hook surface, `${CLAUDE_PLUGIN_ROOT}` is Claude-specific).
 
 **OpenClaw**
 ```
