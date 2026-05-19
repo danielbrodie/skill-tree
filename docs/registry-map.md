@@ -1,8 +1,8 @@
 # Where agent skills actually live
 
-The skill ecosystem on a typical developer's Mac, mapped. Updated 2026-05-18.
+Where skills end up on macOS, by installer. Updated 2026-05-18.
 
-This doc is the institutional knowledge that skill-tree's SKILL.md files reference. The AI consumes it when reasoning about user requests.
+Read by skill-tree's audit / diagnose / install skills at runtime. When one of those needs to answer "where would a Codex plugin's skills live?" or "what's the safe-removal command for vercel-labs/skills?", it pulls the answer from here.
 
 ## Registries
 
