@@ -123,15 +123,15 @@ The model should recognize these patterns when running `/skill-tree:audit` or `/
    ```
    Then restart Claude Code (the loader caches plugin state at process start; `/reload-plugins` post-update reloads the new cache, but the available-skills list won't refresh until restart). Common symptom: user pushes a new version, runs `/reload-plugins`, and the new skill never appears in the available-skills list — that's because the marketplace fetch never happened.
 
-   **Sub-finding (2026-05-18): three independent skill sources, only one refreshed by `/reload-plugins`.** Reading the leaked Claude Code source clarifies the structure:
+   **Sub-finding: `/reload-plugins` only refreshes Claude Code's plugin tier — not the Desktop-provided skills.** Three skill sources show up in the available-skills list of a Claude Code session running inside Claude Desktop:
 
-   1. **CLI bundled skills** — compiled into the Claude Code binary, defined under `src/skills/bundled/`: `loop`, `schedule` (`scheduleRemoteAgents`), `simplify`, `claude-api`, `debug`, `batch`, `keybindings`, `remember`, `claudeInChrome`, `skillify`, `stuck`, `updateConfig`, `verify`, `loremIpsum`. The source's "bundled" term means *compiled in*. Registered via `BundledSkillDefinition` in `src/skills/bundledSkills.ts`. Reference files extract to `getClaudeTempDir()/bundled-skills/<version>/<nonce>/` on first invocation. `/reload-plugins` doesn't touch these.
+   - CLI built-ins compiled into the Claude Code binary (`loop`, `schedule`, `simplify`, etc.).
+   - CLI plugin skills under `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/`.
+   - Claude Desktop's own skills under `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/<uuid>/<uuid>/skills/` — that path is sibling to the Electron app's other data dirs (`Cookies`, `Cache`, etc.), and the skills there are Desktop-provided, not Claude-Code-distributed.
 
-   2. **CLI plugin skills** — `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/`. Refreshed by `/reload-plugins` via `refreshActivePlugins()` in `src/utils/plugins/refresh.ts`. That function explicitly scopes its `setAppState` to the `plugins` sub-tree (`commands: pluginCommands` only) and calls `clearAllCaches()` for plugin caches. Known bugs: [anthropics/claude-code#35641](https://github.com/anthropics/claude-code/issues/35641) (refresh reports success but new plugin skills don't appear until restart); [anthropics/claude-code#57515](https://github.com/anthropics/claude-code/issues/57515) (skill descriptions silently dropped from the system reminder for a fraction of a plugin's skills).
+   `/reload-plugins` refreshes the plugin tier only. After running it, Desktop-provided skills can disappear from the available-skills list — `Skill(skill="humanizer")` returns `Unknown skill` — while built-ins and surviving plugin skills keep working. Two open issues track related load-path bugs: [anthropics/claude-code#35641](https://github.com/anthropics/claude-code/issues/35641) (refresh reports success but new plugin skills don't appear until restart) and [anthropics/claude-code#57515](https://github.com/anthropics/claude-code/issues/57515) (skill descriptions silently dropped from the system reminder for some fraction of a plugin's skills).
 
-   3. **Claude Desktop local-agent-mode skills** — `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/<uuid>/<uuid>/skills/`. **This is Claude Desktop's artifact, not Claude Code's.** The dir is sibling to the Electron app's `Cookies`, `Cache`, `DawnGraphiteCache`, etc. The leaked Claude Code source doesn't reference this path. Contains `humanizer`, `pdf`, `pptx`, `xlsx`, `docx`, `mcp-builder`, `skill-creator`, `algorithmic-art`, `canvas-design`, `consolidate-memory`, `nano-banana-design-prompting`, `obsidian-crosslink`, `return-interview`, `setup-cowork`, `swiftui-pro`, etc. When Claude Code runs inside Claude Desktop, these skills appear in the session's available-skills list via some Desktop ↔ Code integration boundary.
-
-   **Observed behavior:** after `/reload-plugins`, the source #3 set was absent from the available-skills list and `Skill(skill="humanizer")` returned `Unknown skill`, while source #1 (`loop`, `schedule`, etc.) and the surviving source #2 plugin skills continued to work. Best guess: the available-skills list reconstruction triggered by `refreshActivePlugins` doesn't re-merge in the Claude Desktop-provided skills, even though the underlying files on disk are untouched. Practical impact: if a Desktop-provided skill disappears after `/reload-plugins`, restart Claude Code; or read the `SKILL.md` from `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/<uuid>/<uuid>/skills/<name>/SKILL.md` directly and follow it manually.
+   **Fix:** restart Claude Code, or read the SKILL.md directly from the Desktop skills directory and follow it manually if you need a one-off invocation.
 
 5. **Symlink rot.** `~/.claude/skills/X -> ~/.agents/skills/X` but the target was removed. Fix: re-install via `npx skills add <package> --skill X --agent claude-code -g -y`, or remove the dead symlink. Note: `~/.claude/skills/` is re-scanned each turn by the host agent (verified 2026-05-18) — no Claude Code restart needed for symlink fixes to become visible. The plugin cache (`~/.claude/plugins/cache/...`) is the registry that needs restart.
 
@@ -152,7 +152,7 @@ The model should recognize these patterns when running `/skill-tree:audit` or `/
 Things I've seen consistently across Anthropic posts, community write-ups, and my own catalog tinkering:
 
 - **Progressive disclosure beats catalog overflow.** Past ~50 skills, descriptions compete for attention. Hide via `disable-model-invocation: true`; route via cluster or `Skill` tool invocation.
-- **Per-project beats global for distinctive needs; global-popular beats per-project for the workflow base layer.** See `docs/adr/0002-hybrid-global-base-plus-per-project-tail.md` for the validation.
+- **Per-project beats global for distinctive needs; global-popular beats per-project for the workflow base layer.** Validated against ~130 invocations of my own session corpus; numbers are in `docs/measurement.md`.
 - **Don't bundle every skill into every project.** The "iPhone skills in a JavaScript project" anti-pattern.
 - **CLAUDE.md works best short, path-scoped, and per-project** per Anthropic's best-practices post.
 - **Hooks tend toward one PreToolUse gate + one PostToolUse formatter.** Heavier hook setups get noisy fast.
@@ -161,10 +161,8 @@ Things I've seen consistently across Anthropic posts, community write-ups, and m
 
 ## Where this map is incomplete
 
-- **~~Less-popular installers~~** — May 2026 survey filled this gap: Verified Skill, `sx`, iflytek/skillhub are now covered.
-- **~~Enterprise / private skill repos~~** — iflytek/skillhub fills this. Other enterprise registries likely exist but aren't public.
-- **Cross-host / fleet skill management.** A meaningful pattern (Felix-style personal AI deployments, plus company-wide agent fleets) that no public tool addresses well. *Still open.*
-- **The bleeding edge.** Agent platforms ship monthly. The list above lags by weeks.
-- **VS Code's new "Agents window"** — local AI models in VS Code that still require a GitHub Copilot plan. Mentioned in [r/LocalLLaMA 2026-05-14](https://www.reddit.com/r/LocalLLaMA/) but not yet a first-class skill consumer. Track for first-class skill API.
+- **Cross-host / fleet skill management.** A meaningful pattern (personal-AI deployments running off-machine, or company-wide agent fleets) that no public tool addresses well. Open gap.
+- **The bleeding edge.** Agent platforms ship monthly; this list lags. The `/skill-tree:refresh-ecosystem-map` skill is the intended way to keep it current — see its SKILL.md for the monthly process.
+- **VS Code's new "Agents window"** — local AI models in VS Code that still require a GitHub Copilot plan. Not yet a first-class skill consumer.
 
-PRs welcome to keep this current. The 2026-05-18 survey added 12 new entries — that's a normal monthly cadence.
+PRs welcome to keep this current.
