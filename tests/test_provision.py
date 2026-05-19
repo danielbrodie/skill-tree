@@ -85,19 +85,31 @@ class TestCollectProjectSignals:
 
 
 class TestCollectGlobalCatalog:
-    def test_lists_all_skills(self, fake_skills_library):
-        cat = collect_global_catalog(fake_skills_library)
+    def test_lists_all_skills(self, fake_skills_library, tmp_path):
+        cat = collect_global_catalog(
+            fake_skills_library,
+            plugins_cache_dir=tmp_path / "no-plugins",
+            bundled_root=tmp_path / "no-bundled",
+        )
         names = {c["name"] for c in cat}
         assert names == {"tdd", "diagnose", "unused"}
 
-    def test_extracts_description(self, fake_skills_library):
-        cat = collect_global_catalog(fake_skills_library)
+    def test_extracts_description(self, fake_skills_library, tmp_path):
+        cat = collect_global_catalog(
+            fake_skills_library,
+            plugins_cache_dir=tmp_path / "no-plugins",
+            bundled_root=tmp_path / "no-bundled",
+        )
         tdd = next(c for c in cat if c["name"] == "tdd")
         assert "red-green-refactor" in tdd["description"]
 
-    def test_skips_dirs_without_skill_md(self, fake_skills_library):
+    def test_skips_dirs_without_skill_md(self, fake_skills_library, tmp_path):
         (fake_skills_library / "no-skill-md").mkdir()
-        cat = collect_global_catalog(fake_skills_library)
+        cat = collect_global_catalog(
+            fake_skills_library,
+            plugins_cache_dir=tmp_path / "no-plugins",
+            bundled_root=tmp_path / "no-bundled",
+        )
         names = {c["name"] for c in cat}
         assert "no-skill-md" not in names
 

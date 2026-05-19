@@ -188,19 +188,71 @@ def collect_plugin_catalog(plugins_cache_dir: Path) -> list[dict]:
     return out
 
 
+BUNDLED_SKILLS_REL_MACOS = (
+    "Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin"
+)
+
+
+def collect_bundled_catalog(bundled_root: Path) -> list[dict]:
+    """Claude Code's Anthropic-bundled skills.
+
+    macOS path layout: <home>/Library/Application Support/Claude/
+        local-agent-mode-sessions/skills-plugin/<session-uuid>/<sub-uuid>/skills/<name>/SKILL.md
+
+    Same skill may appear under multiple session uuids; dedupe by skill name and
+    keep the first SKILL.md encountered. Origin: "bundled".
+
+    Anthropic also bundles some skills (e.g. `loop`) compiled directly into the
+    Claude Code binary at ~/.local/share/claude/versions/<v> — those have no
+    SKILL.md on disk and cannot be enumerated here. See ecosystem-map.md
+    failure-mode notes for the documented limitation.
+    """
+    out: list[dict] = []
+    if not bundled_root.exists():
+        return out
+    seen: set[str] = set()
+    # Glob both uuid levels: <session-uuid>/<sub-uuid>/skills/*/SKILL.md
+    for skill_md in sorted(bundled_root.glob("*/*/skills/*/SKILL.md")):
+        skill_dir = skill_md.parent
+        name, desc = _read_skill_md(skill_md)
+        if not name:
+            name = skill_dir.name
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append({
+            "name": name,
+            "description": desc,
+            "path": str(skill_dir),
+            "origin": "bundled",
+        })
+    return out
+
+
 def collect_global_catalog(
     skills_dir: Path,
     plugins_cache_dir: Path | None = None,
+    bundled_root: Path | None = None,
 ) -> list[dict]:
-    """Personal skills (~/.claude/skills/) + plugin-namespaced skills (plugin cache).
+    """Personal skills (~/.claude/skills/) + plugin-namespaced skills (plugin cache)
+    + Anthropic-bundled skills (BRO-189 follow-up: scanner blind spot).
 
     Per BRO-184: plugin skills drove ~88% of invocations in the corpus but were
-    invisible to the per-project provisioner before this change.
+    invisible to the per-project provisioner before that change.
+
+    The bundled scan covers Claude Code skills like `schedule`, `mcp-builder`,
+    `skill-creator`, `pdf`, etc. that ship with the Anthropic desktop app and
+    live in `~/Library/Application Support/Claude/...` rather than under
+    `~/.claude/`. Skills compiled into the binary itself (e.g. `loop`) still
+    aren't reachable from any scanner — documented limitation.
     """
     catalog = collect_personal_catalog(skills_dir)
     if plugins_cache_dir is None:
         plugins_cache_dir = skills_dir.parent / "plugins" / "cache"
     catalog.extend(collect_plugin_catalog(plugins_cache_dir))
+    if bundled_root is None:
+        bundled_root = Path.home() / BUNDLED_SKILLS_REL_MACOS
+    catalog.extend(collect_bundled_catalog(bundled_root))
     return catalog
 
 

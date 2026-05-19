@@ -8,7 +8,7 @@ This is companion to [`registry-map.md`](./registry-map.md) (which covers *where
 
 | Platform | Skill load path | Skill format | Notable |
 |---|---|---|---|
-| **Anthropic Claude Code** | `~/.claude/skills/`, `~/.claude/plugins/cache/<mp>/<plugin>/<version>/skills/` | SKILL.md w/ YAML frontmatter (`name`, `description`, optional `disable-model-invocation: true`) | Reference implementation. Plugin marketplace is the primary distribution. |
+| **Anthropic Claude Code** | `~/.claude/skills/`, `~/.claude/plugins/cache/<mp>/<plugin>/<version>/skills/`, **AND** `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/<uuid>/<uuid>/skills/` for Anthropic-bundled skills (macOS) | SKILL.md w/ YAML frontmatter (`name`, `description`, optional `disable-model-invocation: true`). **Some skills are compiled directly into the Claude Code binary** at `~/.local/share/claude/versions/<version>` — e.g. `loop` — and have no SKILL.md anywhere on disk; they can't be enumerated by file-system scanners. | Reference implementation. Plugin marketplace is the primary distribution. |
 | **OpenAI Codex CLI** | `~/.codex/skills/`, `~/.codex/plugins/<plugin>/skills/` | SKILL.md w/ YAML frontmatter. Plugin manifest at `.codex-plugin/plugin.json` | New plugin system. Marketplaces are local-path-only as of mid-2026. |
 | **Google Gemini CLI** | `~/.gemini/extensions/<ext>/skills/` (or `~/.gemini/skills/`) | SKILL.md + extension manifest in `gemini-extension.json` + commands as `.toml` | Uses `${extensionPath}` in command TOML for path templating. |
 | **Cursor** | Cursor Rules + skills via vercel-labs/skills fan-out | `.cursorrules` for legacy, SKILL.md for newer | Multi-format. The vercel-labs installer normalizes. |
