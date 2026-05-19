@@ -1,5 +1,5 @@
 ---
-description: Fetch a skill from GitHub and wire it into the skill graph
+description: Download a SKILL.md from a GitHub URL into the user's local skill library with security checks (prompt injection, zero-width unicode, path traversal). The fetched skill is sandboxed via `disable-model-invocation: true` so it can't auto-fire until explicitly enabled. USE WHEN the user hands you a GitHub URL pointing at a SKILL.md and wants it pulled in safely.
 ---
 
 Fetch and install a skill from GitHub. Extract the URL from the user's message, then run:

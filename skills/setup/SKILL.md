@@ -1,5 +1,5 @@
 ---
-description: Set up or rebuild the skill graph — scan skills, cluster them, generate routing files
+description: One-time setup or rebuild of the optional cluster-routing manifest — groups your installed skills into 15-30 semantic clusters with visible router skills + hidden leaves so the prelude carries one router-description per cluster instead of one description per skill. Mostly useful past ~150 installed skills, when the per-description prelude budget overflows. USE WHEN the user explicitly wants cluster routing set up or rebuilt; skip otherwise — the default management surface is `/skill-tree:provision`.
 ---
 
 This command sets up the skill-tree manifest. You are the clustering algorithm.
