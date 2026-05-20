@@ -315,7 +315,8 @@ def apply_skills(
     looked like a typo.
     """
     now = datetime.now(timezone.utc).isoformat()
-    manifest = load_project_manifest(root) or {
+    existing_manifest = load_project_manifest(root)
+    manifest = existing_manifest or {
         "version": "1.0",
         "sourceLibrary": str(skills_dir),
         "skills": {},
@@ -324,6 +325,25 @@ def apply_skills(
     manifest["syncedAt"] = now
 
     project_skills_dir = root / PROJECT_SKILLS_REL
+
+    # If the project already has a hand-curated .claude/skills/ that skill-tree
+    # didn't create (non-empty dir, no manifest tracking those entries), warn
+    # before merging into it. Provisioned skills will sit alongside the
+    # hand-curated ones; only the skill-tree-managed subset is in .skilltree.json.
+    if project_skills_dir.is_dir():
+        managed = set((existing_manifest or {}).get("skills", {}).keys())
+        on_disk = {p.name for p in project_skills_dir.iterdir() if p.is_dir() or p.is_symlink()}
+        unmanaged = sorted(on_disk - managed)
+        if unmanaged and existing_manifest is None:
+            print(
+                f"warn: {project_skills_dir} already contains {len(unmanaged)} skill(s) "
+                f"not managed by skill-tree ({', '.join(unmanaged[:6])}"
+                f"{', …' if len(unmanaged) > 6 else ''}). Provisioned skills will be "
+                f"added alongside them; only the skill-tree-provisioned subset is tracked "
+                f"in .claude/.skilltree.json. /skill-tree:sync only touches the tracked subset.",
+                file=sys.stderr,
+            )
+
     project_skills_dir.mkdir(parents=True, exist_ok=True)
 
     added: list[str] = []
@@ -339,10 +359,22 @@ def apply_skills(
             continue
         src = skills_dir / name
         if not src.is_dir():
-            print(f"warn: skill not found in personal library: {name}", file=sys.stderr)
+            print(
+                f"warn: skipping '{name}': not a directory under the personal skill "
+                f"library ({skills_dir}). If this is an Anthropic-bundled skill "
+                f"(schedule, pdf, mcp-builder, humanizer, skill-creator, etc.) it's "
+                f"managed by Claude Desktop and can't be provisioned per-project; if "
+                f"it's a plugin skill, use the plugin's own installer.",
+                file=sys.stderr,
+            )
             continue
         dst = project_skills_dir / name
-        if dst.exists():
+        # rmtree refuses to operate on a symlink — a project skill installed by
+        # vercel-labs/skills is a symlink. Unlink it (don't follow into the
+        # shared target) before copying skill-tree's own copy in.
+        if dst.is_symlink():
+            dst.unlink()
+        elif dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(src, dst, symlinks=False)
         manifest["skills"][name] = {
