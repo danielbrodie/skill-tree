@@ -184,6 +184,64 @@ class TestApplySkills:
         assert "superpowers:writing-plans" in captured.err
         assert "plugin" in captured.err.lower()
 
+    def test_bundled_skill_name_gets_specific_rejection(
+        self, fake_project, fake_skills_library, capsys
+    ):
+        # Regression from the 2026-05-20 dogfood: --list-candidates includes
+        # Anthropic-bundled skills (origin "bundled", plain names, no colon).
+        # A model picking one (e.g. `schedule`) and passing it to --apply used
+        # to get a bare "skill not found in personal library" warning that
+        # looked like a typo. The not-found message must now name the bundled
+        # case explicitly.
+        result = apply_skills(
+            fake_project, ["tdd", "schedule"], "test", fake_skills_library
+        )
+        assert result["added"] == ["tdd"]
+        captured = capsys.readouterr()
+        assert "schedule" in captured.err
+        assert "bundled" in captured.err.lower()
+
+    def test_symlinked_project_skill_is_replaced_not_crashed(
+        self, fake_project, fake_skills_library
+    ):
+        # Regression from the 2026-05-20 dogfood: vercel-labs/skills installs
+        # project skills as symlinks. apply_skills did `shutil.rmtree(dst)`
+        # which raises OSError on a symlink. A pre-existing symlink at the
+        # target path must be unlinked (not followed) and replaced with the
+        # copied skill.
+        project_skills = fake_project / PROJECT_SKILLS_REL
+        project_skills.mkdir(parents=True, exist_ok=True)
+        # Stand up a symlink where `tdd` will be provisioned.
+        external = fake_project.parent / "external-tdd"
+        external.mkdir(parents=True, exist_ok=True)
+        (external / "SKILL.md").write_text("---\nname: tdd\n---\nexternal\n")
+        (project_skills / "tdd").symlink_to(external)
+
+        result = apply_skills(fake_project, ["tdd"], "test", fake_skills_library)
+        assert result["added"] == ["tdd"]
+        # The target is now a real directory, not a symlink.
+        assert not (project_skills / "tdd").is_symlink()
+        assert (project_skills / "tdd" / "SKILL.md").exists()
+        # The external symlink target must be untouched.
+        assert (external / "SKILL.md").read_text() == "---\nname: tdd\n---\nexternal\n"
+
+    def test_warns_when_merging_into_hand_curated_skills_dir(
+        self, fake_project, fake_skills_library, capsys
+    ):
+        # Regression from the 2026-05-20 dogfood: provisioning into a project
+        # whose .claude/skills/ was hand-curated (non-empty, no .skilltree.json)
+        # silently merged skill-tree's picks alongside the user's own skills.
+        # apply_skills must warn so the user knows the dir is now mixed.
+        project_skills = fake_project / PROJECT_SKILLS_REL
+        project_skills.mkdir(parents=True, exist_ok=True)
+        (project_skills / "hand-curated-a").mkdir()
+        (project_skills / "hand-curated-b").mkdir()
+
+        apply_skills(fake_project, ["tdd"], "test", fake_skills_library)
+        captured = capsys.readouterr()
+        assert "not managed by skill-tree" in captured.err
+        assert "hand-curated-a" in captured.err
+
     def test_replaces_existing_copy_on_reapply(
         self, fake_project, fake_skills_library
     ):
