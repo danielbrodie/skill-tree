@@ -17,9 +17,31 @@ from provision import (  # noqa: E402
     find_project_root,
     load_project_manifest,
     write_project_manifest,
+    _portable_path,
     PROJECT_MANIFEST_REL,
     PROJECT_SKILLS_REL,
 )
+
+
+class TestPortablePath:
+    """The manifest is meant to travel with the project's git repo, so the
+    paths written into it must not bake in an absolute home dir."""
+
+    def test_collapses_home_to_tilde(self):
+        home = Path.home()
+        assert _portable_path(home / ".claude" / "skills" / "tdd") == "~/.claude/skills/tdd"
+
+    def test_bare_home_becomes_tilde(self):
+        assert _portable_path(Path.home()) == "~"
+
+    def test_non_home_path_unchanged(self):
+        assert _portable_path(Path("/opt/shared/skills")) == "/opt/shared/skills"
+
+    def test_does_not_collapse_a_homelike_prefix(self):
+        # A sibling dir whose name merely starts with the home basename must
+        # not be mangled.
+        sibling = Path(str(Path.home()) + "-backup") / "skills"
+        assert _portable_path(sibling) == str(sibling)
 
 
 @pytest.fixture

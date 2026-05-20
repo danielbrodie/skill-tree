@@ -299,6 +299,23 @@ def sha256_of_skill_md(skill_dir: Path) -> str | None:
         return None
 
 
+def _portable_path(p: Path) -> str:
+    """Collapse the user's home dir to `~` so a path written into a committed
+    `.claude/.skilltree.json` is portable across machines and doesn't leak the
+    home directory. `sourceLibrary` and per-skill `source` are provenance
+    records only — no skill-tree logic reads them back — so storing them as
+    `~/...` is purely a portability/privacy win for a manifest that's meant to
+    travel with the project's git repo.
+    """
+    home = str(Path.home())
+    s = str(p)
+    if s == home:
+        return "~"
+    if s.startswith(home + "/"):
+        return "~" + s[len(home):]
+    return s
+
+
 def apply_skills(
     root: Path, skill_names: list[str], reason: str, skills_dir: Path
 ) -> dict:
@@ -318,7 +335,7 @@ def apply_skills(
     existing_manifest = load_project_manifest(root)
     manifest = existing_manifest or {
         "version": "1.0",
-        "sourceLibrary": str(skills_dir),
+        "sourceLibrary": _portable_path(skills_dir),
         "skills": {},
         "auditLog": [],
     }
@@ -378,7 +395,7 @@ def apply_skills(
             shutil.rmtree(dst)
         shutil.copytree(src, dst, symlinks=False)
         manifest["skills"][name] = {
-            "source": str(src),
+            "source": _portable_path(src),
             "reason": reason,
             "syncedAt": now,
             "sourceHash": sha256_of_skill_md(src),
