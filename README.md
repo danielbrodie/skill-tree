@@ -61,13 +61,14 @@ openclaw plugins install ./openclaw
 ```json
 {
   "version": "1.0",
-  "sourceLibrary": "/Users/you/.claude/skills",
+  "sourceLibrary": "~/.claude/skills",
   "syncedAt": "...",
   "skills": {
     "tdd": {
-      "source": "/Users/you/.claude/skills/tdd",
+      "source": "~/.claude/skills/tdd",
       "reason": "Python+pytest repo",
-      "syncedAt": "..."
+      "syncedAt": "...",
+      "sourceHash": "..."
     }
   },
   "auditLog": [...]
@@ -75,6 +76,8 @@ openclaw plugins install ./openclaw
 ```
 
 Skills are copied, not symlinked, so your project edits won't fight upstream library changes. `/skill-tree:sync` reconciles drift when you want it.
+
+**Commit `.claude/skills/` and `.claude/.skilltree.json` to the project's repo.** The per-project skill set is meant to travel with the project — anyone who clones the repo gets the same focused prelude, and CI/other machines get the same skills without a global library. Manifest paths are stored `~`-relative (not absolute) precisely so the file is portable. The `sourceHash` lets `/skill-tree:sync` detect when a committed copy has drifted from whatever global library a given machine has.
 
 ## The docs
 
