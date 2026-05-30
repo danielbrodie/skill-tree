@@ -10,3 +10,6 @@ docs/plans/
 
 # Tool working-state directories — not part of the project
 .clawpatch/
+
+# macOS cruft
+.DS_Store
