@@ -4,9 +4,11 @@
 
 # skill-tree
 
-Manage agent skills you already have installed — across Claude Code, Codex CLI, and Gemini CLI.
+Operate and repair the agent skills you already have installed — across Claude Code, Codex CLI, and Gemini CLI.
 
-Skills accumulate. After ~150 of them my prelude got noisy enough that Claude Code kept offering a flight-rewards skill while I was writing iOS code. `skill-tree` narrows the prelude to a small project-specific set, audits the install registries for the usual breakage (stale symlinks, lock-file drift, parallel registries), and documents how the skill system actually works so you can fix it when it breaks.
+Skills accumulate, and across multiple installers they break in ways no single tool surfaces: stale plugin-cache versions, symlink rot, parallel registries with version skew, lock-file drift. `skill-tree` audits every skill registry on your machine, diagnoses why a given skill won't load, and documents how the skill system actually works on each platform — every load-path and frontmatter claim cited to that platform's official docs. **That cross-installer operations layer is the core of the tool**, and nothing native or otherwise covers it today.
+
+It also includes a **provisioner** that narrows a project to a small, committable skill set — but be honest about when you need it. Recent Claude Code handles the basic case natively: the skill prelude is auto-capped (~1% of context, least-invoked descriptions dropped first), and `skillOverrides` / `paths` hide or scope individual skills with no copy, manifest, or sync. The provisioner earns its keep where that doesn't reach: large catalogs across multiple installers (native per-skill toggles don't affect plugin skills), and team/CI/multi-machine setups that want a reproducible, hash-pinned skill set committed to the repo. For a single-installer setup under the prelude budget, the native settings are simpler — reach for the provisioner at scale.
 
 This is about progressive disclosure and management — not skill discovery. For discovery, see Anthropic's [`claude-code-setup`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup) or [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills).
 
@@ -14,14 +16,21 @@ Early. Mostly used by me. Tested on macOS, not Linux. Issues and PRs welcome.
 
 ## Commands
 
+**Operate & repair** — the core, and the part with no native substitute:
+
 | Command | What it does |
 |---|---|
-| `/skill-tree:provision` | Pick a small set of skills that fit the current project. Copy them into `<project>/.claude/skills/` so the prelude stays focused. |
 | `/skill-tree:audit` | Walk every skill registry on this machine. Report what's broken and the fix command per installer. |
 | `/skill-tree:diagnose <symptom>` | "My new skill isn't appearing." "I get 'skill not found' for X." Match the symptom to a known failure-mode signature in `docs/ecosystem-map.md` and point at the fix. |
-| `/skill-tree:sync` | Reconcile project skill copies after upstream library changes. |
-| `/skill-tree:fetch <url>` | Download a skill from GitHub with security checks. New skills are sandboxed (`disable-model-invocation: true`) until you add them to a cluster. |
 | `/skill-tree:check` | Health check on the manifest graph. |
+
+**Provision & sync** — useful at scale (large multi-installer catalogs, teams/CI); for a single-installer setup, native `skillOverrides`/`paths` are simpler — see the note above:
+
+| Command | What it does |
+|---|---|
+| `/skill-tree:provision` | Pick a small set of skills that fit the current project and copy them into `<project>/.claude/skills/` as a committable, hash-pinned set. |
+| `/skill-tree:sync` | Reconcile project skill copies after upstream library changes. |
+| `/skill-tree:fetch <url>` | Download a skill from GitHub with security checks. New skills are sandboxed (`disable-model-invocation: true`) until you enable them. |
 
 ## Install
 
