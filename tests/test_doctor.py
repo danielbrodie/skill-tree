@@ -8,6 +8,7 @@ fires — plus a clean-state test asserting no false positive.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from scripts.doctor import (
@@ -162,6 +163,93 @@ def test_unknown_agent_skipped_not_flagged(tmp_path: Path) -> None:
     assert detect_fanout_absent_agents(skill_lock, tmp_path) == []
 
 
+def test_null_last_selected_agents_does_not_crash(tmp_path: Path) -> None:
+    # Explicit JSON null: .get(key, []) returns None, not [] — must not raise.
+    assert detect_fanout_absent_agents({"lastSelectedAgents": None}, tmp_path) == []
+
+
+# ---------------------------------------------------------------------------
+# Signature #2 — version-aware: stale manifest vs duplicate vs real skew
+# ---------------------------------------------------------------------------
+
+
+def _version_dir(plugin_dir: Path, name: str, version: str | None = None) -> Path:
+    d = plugin_dir / name
+    d.mkdir(parents=True, exist_ok=True)
+    if version is not None:
+        cp = d / ".claude-plugin"
+        cp.mkdir()
+        (cp / "plugin.json").write_text(
+            json.dumps({"version": version}), encoding="utf-8"
+        )
+    return d
+
+
+def test_referenced_dir_absent_is_stale_manifest_do_not_delete(tmp_path: Path) -> None:
+    # installed_plugins points at 1.0.0 (gone); 2.0.0 is the only dir present.
+    plugin = tmp_path / "cache" / "mkt" / "plug"
+    present = _version_dir(plugin, "2.0.0", version="2.0.0")
+    installed = {
+        "plugins": {
+            "plug@mkt": [{"installPath": str(plugin / "1.0.0"), "version": "1.0.0"}]
+        }
+    }
+
+    findings = detect_stale_plugin_cache(installed)
+
+    assert len(findings) == 1
+    f = findings[0]
+    assert f.signature_id == 2
+    assert "1.0.0" in f.observation and "2.0.0" in f.observation
+    assert "stale" in f.observation.lower()
+    assert "do not delete" in f.suggested_fix.lower()
+    # must not be present.name being recommended for rm
+    assert str(present) not in f.suggested_fix
+
+
+def test_same_version_reextraction_labeled_duplicate_not_skew(tmp_path: Path) -> None:
+    plugin = tmp_path / "cache" / "mkt" / "plug"
+    _version_dir(plugin, "5.1.0", version="5.1.0")  # referenced
+    extra = _version_dir(
+        plugin, "abc123sha", version="5.1.0"
+    )  # same version, unreferenced
+    installed = {
+        "plugins": {
+            "plug@mkt": [{"installPath": str(plugin / "5.1.0"), "version": "5.1.0"}]
+        }
+    }
+
+    findings = detect_stale_plugin_cache(installed)
+
+    assert len(findings) == 1
+    f = findings[0]
+    assert f.signature_id == 2
+    assert (
+        "duplicate" in f.observation.lower() or "same version" in f.observation.lower()
+    )
+    assert (
+        "version skew" not in f.observation.lower()
+    )  # must not mislabel a same-version dup
+    assert str(extra) in f.paths
+
+
+def test_different_versions_labeled_skew(tmp_path: Path) -> None:
+    plugin = tmp_path / "cache" / "mkt" / "plug"
+    _version_dir(plugin, "2.0.0", version="2.0.0")  # referenced
+    _version_dir(plugin, "1.0.0", version="1.0.0")  # older, unreferenced
+    installed = {
+        "plugins": {
+            "plug@mkt": [{"installPath": str(plugin / "2.0.0"), "version": "2.0.0"}]
+        }
+    }
+
+    findings = detect_stale_plugin_cache(installed)
+
+    assert len(findings) == 1
+    assert findings[0].signature_id == 2
+    assert "1.0.0" in findings[0].observation
+
+
 # ---------------------------------------------------------------------------
 # Signature #7 — same skill name in two registries (parallel-registry skew)
 # ---------------------------------------------------------------------------
@@ -268,6 +356,16 @@ def test_info_only_does_not_escalate_exit_code(tmp_path: Path) -> None:
 
     assert all(f.severity == "info" for f in report.findings)
     assert report.exit_code() == 0  # info never escalates
+
+
+def test_run_doctor_scans_symlink_rot_beyond_claude_skills(tmp_path: Path) -> None:
+    # A dead symlink in ~/.agents/skills (not just ~/.claude/skills) must be caught.
+    env = _empty_env(tmp_path)
+    (env["agents_skills_dir"] / "ghost").symlink_to(tmp_path / "gone")
+
+    report = run_doctor(**env)
+
+    assert any(f.signature_id == 4 for f in report.findings)
 
 
 def test_findings_to_dicts_is_json_serializable(tmp_path: Path) -> None:

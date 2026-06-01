@@ -88,7 +88,8 @@ AGENT_HOME_DIRS: dict[str, str] = {
 def detect_fanout_absent_agents(skill_lock: dict, home: Path) -> list[Finding]:
     """Signature #1: vercel-labs/skills fans out to agents not installed on this machine."""
     findings: list[Finding] = []
-    for agent in skill_lock.get("lastSelectedAgents", []):
+    # `or []` (not a .get default) so an explicit JSON `null` doesn't become `None`.
+    for agent in skill_lock.get("lastSelectedAgents") or []:
         dir_name = AGENT_HOME_DIRS.get(agent)
         if dir_name is None:
             continue  # unknown agent — can't verify, don't false-positive
@@ -118,47 +119,127 @@ def _live_install_dirs(installed_plugins: dict) -> set[Path]:
     return live
 
 
-def detect_stale_plugin_cache(installed_plugins: dict) -> list[Finding]:
-    """Signature #2a: an old version dir left beside the installed one in the plugin cache.
+def _plugin_version(version_dir: Path) -> str | None:
+    """Read the declared version from a plugin version dir's plugin.json, if present."""
+    for candidate in (
+        version_dir / ".claude-plugin" / "plugin.json",
+        version_dir / "plugin.json",
+    ):
+        try:
+            return json.loads(candidate.read_text(encoding="utf-8")).get("version")
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+            continue
+    return None
 
-    Anchored on the version dirs `installed_plugins.json` actually references, so we
-    only inspect directories we know are plugin installs (no false positives on
-    marketplace-metadata dirs like `.git` / `.claude-plugin`).
+
+def detect_stale_plugin_cache(installed_plugins: dict) -> list[Finding]:
+    """Signature #2a: plugin-cache dirs that disagree with installed_plugins.json.
+
+    Three distinct cases, distinguished so the fix is never a blind delete:
+    - **stale manifest** — installed_plugins references a version dir that's *gone*, while
+      another dir is present. The present dir is almost certainly live; the manifest is the
+      stale party. Fix is "do NOT delete", refresh the record.
+    - **duplicate extraction** — an unreferenced dir whose plugin.json version *matches* the
+      installed one (e.g. a SHA-named re-extraction of the same version). Redundant disk, not skew.
+    - **version skew** — an unreferenced dir whose version differs. Verify which loads first.
+
+    Anchored on the dirs installed_plugins references, so marketplace-metadata dirs are never
+    mistaken for plugin versions.
     """
     findings: list[Finding] = []
     live = _live_install_dirs(installed_plugins)
 
-    live_versions_by_plugin: dict[Path, set[str]] = {}
+    referenced_by_plugin: dict[Path, set[str]] = {}
     for path in live:
-        live_versions_by_plugin.setdefault(path.parent, set()).add(path.name)
+        referenced_by_plugin.setdefault(path.parent, set()).add(path.name)
 
-    for plugin_dir, live_versions in sorted(live_versions_by_plugin.items()):
+    for plugin_dir, referenced in sorted(referenced_by_plugin.items()):
         if not plugin_dir.is_dir():
             continue
         plugin_ref = f"{plugin_dir.name}@{plugin_dir.parent.name}"
-        live_list = ", ".join(sorted(live_versions))
-        for version_dir in sorted(plugin_dir.iterdir()):
-            if version_dir.is_dir() and version_dir.name not in live_versions:
-                label = f"{plugin_dir.parent.name}/{plugin_dir.name}/{version_dir.name}"
-                findings.append(
-                    Finding(
-                        signature_id=2,
-                        severity="warning",
-                        # Deterministic fact: this dir isn't referenced. Whether it's *dead*
-                        # depends on the loader, and machines exist where a newer unreferenced
-                        # dir is the one actually in use — so verify before deleting.
-                        observation=(
-                            f"plugin cache version skew: '{label}' is present but not referenced "
-                            f"in installed_plugins.json (it references {live_list})"
-                        ),
-                        suggested_fix=(
-                            f"confirm the live version first: claude plugin details {plugin_ref}; "
-                            "then `rm -rf` whichever dir is truly unused"
-                        ),
-                        confidence="medium",
-                        paths=(str(version_dir),),
-                    )
+        present = {d.name for d in plugin_dir.iterdir() if d.is_dir()}
+        referenced_present = referenced & present
+        referenced_absent = referenced - present
+        extra = present - referenced
+
+        # Case 1 — stale manifest: referenced version missing, another dir present.
+        if referenced_absent and extra:
+            absent_list = ", ".join(sorted(referenced_absent))
+            present_list = ", ".join(sorted(present))
+            findings.append(
+                Finding(
+                    signature_id=2,
+                    severity="warning",
+                    confidence="high",
+                    observation=(
+                        f"{plugin_ref}: installed_plugins.json references version(s) {absent_list} "
+                        f"missing from disk, but {present_list} is present — the manifest entry is "
+                        "stale; the present dir is likely the live plugin"
+                    ),
+                    suggested_fix=(
+                        f"do NOT delete the present dir — refresh the record instead "
+                        f"(claude plugin update {plugin_ref}, or reinstall). Confirm: "
+                        f"claude plugin details {plugin_ref}"
+                    ),
+                    paths=(str(plugin_dir),),
                 )
+            )
+            continue
+
+        # Case 2 — an unreferenced dir sits beside the installed one: duplicate vs real skew.
+        if referenced_present and extra:
+            ref_version = next(
+                (
+                    v
+                    for v in (
+                        _plugin_version(plugin_dir / r)
+                        for r in sorted(referenced_present)
+                    )
+                    if v
+                ),
+                None,
+            )
+            for name in sorted(extra):
+                extra_dir = plugin_dir / name
+                extra_version = _plugin_version(extra_dir)
+                if extra_version and ref_version and extra_version == ref_version:
+                    findings.append(
+                        Finding(
+                            signature_id=2,
+                            severity="warning",
+                            confidence="medium",
+                            observation=(
+                                f"{plugin_ref}: '{name}' is a duplicate cache extraction of the "
+                                f"same version ({extra_version}) as the installed dir — redundant disk, not a skew"
+                            ),
+                            suggested_fix=(
+                                f"confirm the live dir (claude plugin details {plugin_ref}); the other copy is safe to remove"
+                            ),
+                            paths=(str(extra_dir),),
+                        )
+                    )
+                else:
+                    vinfo = (
+                        f" (cache {extra_version or 'unknown'} vs installed {ref_version or 'unknown'})"
+                        if (extra_version or ref_version)
+                        else ""
+                    )
+                    findings.append(
+                        Finding(
+                            signature_id=2,
+                            severity="warning",
+                            confidence="medium",
+                            observation=(
+                                f"{plugin_ref}: version '{name}' is present but not referenced in "
+                                f"installed_plugins.json{vinfo}"
+                            ),
+                            suggested_fix=(
+                                f"confirm the live version first: claude plugin details {plugin_ref}; "
+                                "then `rm -rf` whichever dir is truly unused"
+                            ),
+                            paths=(str(extra_dir),),
+                        )
+                    )
     return findings
 
 
@@ -268,10 +349,14 @@ def run_doctor(
     plugin_cache_dir: Path,
     installed_plugins: dict,
     skill_lock: dict,
+    gemini_skills_dir: Path | None = None,
 ) -> DoctorReport:
     """Run every deterministic cross-ecosystem detector and aggregate the findings."""
     findings: list[Finding] = []
-    findings.extend(detect_symlink_rot(claude_skills_dir))
+    # Symlink rot can occur in any skill dir, not just ~/.claude/skills.
+    for skills_dir in (claude_skills_dir, agents_skills_dir, gemini_skills_dir):
+        if skills_dir is not None:
+            findings.extend(detect_symlink_rot(skills_dir))
     findings.extend(detect_stale_plugin_cache(installed_plugins))
     findings.extend(detect_fanout_absent_agents(skill_lock, home))
     findings.extend(
@@ -315,6 +400,7 @@ def load_environment(home: Path) -> dict:
         "home": home,
         "claude_skills_dir": home / ".claude" / "skills",
         "agents_skills_dir": home / ".agents" / "skills",
+        "gemini_skills_dir": home / ".gemini" / "skills",
         "plugin_cache_dir": home / ".claude" / "plugins" / "cache",
         "installed_plugins": _read_json(
             home / ".claude" / "plugins" / "installed_plugins.json", {"plugins": {}}

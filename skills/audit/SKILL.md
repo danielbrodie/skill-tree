@@ -49,7 +49,7 @@ Walk findings one at a time. Apply only on a clear yes; record applied actions t
 
 > Finding: symlink rot on `ghost` → `~/.agents/skills/ghost` (gone). Safe action: `rm ~/.claude/skills/ghost`. Apply? (y/n/skip)
 
-**Version-skew findings (#2) demand extra care.** A `medium`-confidence cache-skew finding means a version dir is *unreferenced*, not provably *dead* — on some machines the newer unreferenced dir is the one actually loading. Run the finding's verification step (`claude plugin details <plugin>@<marketplace>`) and confirm which version is live **before** removing anything. Never pipe `doctor` findings straight into `rm -rf`.
+**#2 findings demand extra care — read which of the three they are.** The doctor distinguishes: (a) **stale manifest** (high confidence) — `installed_plugins.json` references a version dir that's *gone* while another is present; the present dir is the live plugin, so the fix is **"do NOT delete"**, refresh the record; (b) **duplicate extraction** (medium) — an unreferenced dir whose `plugin.json` version *matches* the installed one, safe to remove after confirming; (c) **version skew** (medium) — an unreferenced dir at a *different* version. For (b) and (c), run `claude plugin details <plugin>@<marketplace>` and confirm which version is live **before** removing anything. Never pipe `doctor` findings straight into `rm -rf`.
 
 **Report-only findings are valid.** Dead inventory (#8) is often intentional reserves for infrequent workflows — surface it, explain, move on. Don't fabricate an action for the sake of having one.
 
