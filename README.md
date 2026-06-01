@@ -6,13 +6,23 @@
 
 Operate and repair the agent skills you already have installed — across Claude Code, Codex CLI, and Gemini CLI.
 
-Skills accumulate, and across multiple installers they break in ways no single tool surfaces: stale plugin-cache versions, symlink rot, parallel registries with version skew, lock-file drift. `skill-tree` audits every skill registry on your machine, diagnoses why a given skill won't load, and documents how the skill system actually works on each platform — every load-path and frontmatter claim cited to that platform's official docs. **That cross-installer operations layer is the core of the tool**, and nothing native or otherwise covers it today.
+Skills accumulate, and across multiple installers they break in ways no single tool surfaces: stale plugin-cache versions, symlink rot, parallel registries with version skew, lock-file drift. `skill-tree` audits every skill registry on your machine, diagnoses why a given skill won't load, and documents how the skill system actually works on each platform — every load-path and frontmatter claim cited to that platform's official docs. **That installer-plumbing layer is the core of the tool** — and it's the slice other skill tools don't touch (see [how it relates to other tools](#how-it-relates-to-other-skill-tools)).
 
 It also includes a **provisioner** that narrows a project to a small, committable skill set — but be honest about when you need it. Recent Claude Code handles the basic case natively: the skill prelude is auto-capped (~1% of context, least-invoked descriptions dropped first), and `skillOverrides` / `paths` hide or scope individual skills with no copy, manifest, or sync. The provisioner earns its keep where that doesn't reach: large catalogs across multiple installers (native per-skill toggles don't affect plugin skills), and team/CI/multi-machine setups that want a reproducible, hash-pinned skill set committed to the repo. For a single-installer setup under the prelude budget, the native settings are simpler — reach for the provisioner at scale.
 
 This is about progressive disclosure and management — not skill discovery. For discovery, see Anthropic's [`claude-code-setup`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup) or [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills).
 
 Early. Mostly used by me. Tested on macOS, not Linux. Issues and PRs welcome.
+
+## How it relates to other skill tools
+
+skill-tree is the **installer-plumbing doctor**, not a general skill manager — built to compose with the tools that already do the rest well:
+
+- **[skill-doctor](https://github.com/xigua-wang/skill-doctor)** inspects skill *content*: precedence (which definition wins), trigger overlap, duplicate names, risky instructions. Reach for it for "which skill is actually firing, and is it safe?"
+- **[asm](https://github.com/luongnv89/asm)** installs, searches, security-scans, and publishes skills across agents. Reach for it to *get* and *manage* skills.
+- **skill-tree** scans the parts those don't: plugin-cache version skew, stale `installed_plugins.json`, vercel-labs fan-out to agents you don't have installed, symlink rot — the installer/cache plumbing that breaks silently. (Verified 2026-06 that neither tool above checks these.)
+
+Use them together: `asm` to install, `skill-doctor` to reason about content, `skill-tree doctor` to keep the install plumbing healthy.
 
 ## Commands
 
