@@ -55,6 +55,12 @@ Command names were chosen to avoid collision with Claude Code built-ins (`init`,
 - `manifest.json` is the source of truth. Cluster SKILL.md files are generated artifacts. Never edit clusters directly.
 - Fetched skills are sandboxed (`disable-model-invocation: true`) until explicitly added to a cluster.
 
+## Operational lessons
+
+- **`scripts/sync.py` defaults `--skills-dir` to `~/.claude/skills/` — always pass it explicitly.** Running `uv run sync.py` with no `--skills-dir` materializes ALL cluster routers there, clobbering the project-scoped (`~/vault/.claude/skills/`) and plugin-scoped (`~/Projects/skills/plugins/*/skills/`) setups — a bare run once dumped 24 routers globally and blew up token usage until they were `rm`'d back to the intended 6. For per-cluster edits (add a leaf, set `disable-model-invocation: true`, set a routing hint), edit `manifest.json` directly and hand-write the affected SKILL.md — don't reach for sync.py at all.
+- **Read the platform docs before building, not after.** Copying other plugins' patterns instead of the official reference produced bare relative paths, missing manifest metadata (author/license/repository/keywords), legacy `commands/*.md` instead of `skills/<name>/SKILL.md`, and a fabricated `user-invocable: true` field that isn't real. Fetch `https://code.claude.com/docs/llms.txt` for the index, then read the reference page for the component you're building.
+- **User-facing docs use the short command name.** Autocomplete fires on the command (`/check`), not the plugin-prefixed form (`/skill-tree:check`) — README and examples should show `/check`.
+
 ## Git
 
 - Git email: `11337994+danielbrodie@users.noreply.github.com` (NOT `daniel@users...`)
